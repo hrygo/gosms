@@ -1,8 +1,6 @@
 AppDebug: false   # 设置程序所处的模式，debug=true 调试模式，日志优先显示在控制台，debug=false 非调试模式，将写入日志文件
 
 Server:
-  Pprof: #pprof debug 定义
-    Port: 10088
   CMPP: #移动网关配置信息
     Port: 10086               #CMPP服务 端口
     Multicore: true           #CMPP服务 是否开启多核
@@ -21,6 +19,8 @@ Server:
     MaxPoolSize: 2048
     ReceiveWindowSize: 1000
     MaxConnections: 10
+  Pprof: #pprof debug 定义
+    Port: 10088
 
 Logs:
   Default: # 默认的全部日志

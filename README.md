@@ -1,1 +1,3 @@
-# gosms.v2
+# gosmsn golang开发的短信网关
+
+gosmsn 
