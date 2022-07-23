@@ -1,12 +1,12 @@
 package event_manage
 
 import (
-  "strings"
-  "sync"
+	"strings"
+	"sync"
 
-  "github.com/hrygo/log"
+	"github.com/hrygo/log"
 
-  "github.com/hrygo/gosmsn/my_errors"
+	"github.com/hrygo/gosmsn/my_errors"
 )
 
 // EventPrefix 统一Key前缀
@@ -23,64 +23,64 @@ type eventManage struct{}
 
 // CreateEventManageFactory 创建一个事件管理工厂
 func CreateEventManageFactory() *eventManage {
-  return &eventManage{}
+	return &eventManage{}
 }
 
-// Register 1.注册事件
+// Register 注册事件
 func (m *eventManage) Register(key string, e Event) bool {
-  if !strings.HasPrefix(key, EventPrefix) {
-    key = EventPrefix + key
-  }
-  // 判断key下是否已有事件
-  if _, exists := m.Get(key); exists == false {
-    sMap.Store(key, e)
-    return true
-  } else {
-    log.Info(my_errors.ErrorsFuncEventAlreadyExists + " , 相关键名：" + key)
-  }
-  return false
+	if !strings.HasPrefix(key, EventPrefix) {
+		key = EventPrefix + key
+	}
+	// 判断key下是否已有事件
+	if _, exists := m.Get(key); exists == false {
+		sMap.Store(key, e)
+		return true
+	} else {
+		log.Info(my_errors.ErrorsFuncEventAlreadyExists + " , 相关键名：" + key)
+	}
+	return false
 }
 
-// Get 2.获取事件
+// Get 获取事件
 func (m *eventManage) Get(key string) (Event, bool) {
-  if !strings.HasPrefix(key, EventPrefix) {
-    key = EventPrefix + key
-  }
-  if value, exists := sMap.Load(key); exists {
-    e, ok := value.(Event)
-    return e, ok
-  }
-  return nil, false
+	if !strings.HasPrefix(key, EventPrefix) {
+		key = EventPrefix + key
+	}
+	if value, exists := sMap.Load(key); exists {
+		e, ok := value.(Event)
+		return e, ok
+	}
+	return nil, false
 }
 
-// Call 3.执行事件
+// Call 执行事件
 func (m *eventManage) Call(key string, args ...interface{}) {
-  if !strings.HasPrefix(key, EventPrefix) {
-    key = EventPrefix + key
-  }
-  if fn, exists := m.Get(key); exists {
-    fn(args)
-  } else {
-    log.Error(my_errors.ErrorsFuncEventNotRegister + ", 键名：" + key)
-  }
+	if !strings.HasPrefix(key, EventPrefix) {
+		key = EventPrefix + key
+	}
+	if fn, exists := m.Get(key); exists {
+		fn(args)
+	} else {
+		log.Error(my_errors.ErrorsFuncEventNotRegister + ", 键名：" + key)
+	}
 }
 
-// Delete 4.删除事件
+// Delete 删除事件
 func (m *eventManage) Delete(key string) {
-  if !strings.HasPrefix(key, EventPrefix) {
-    key = EventPrefix + key
-  }
-  sMap.Delete(key)
+	if !strings.HasPrefix(key, EventPrefix) {
+		key = EventPrefix + key
+	}
+	sMap.Delete(key)
 }
 
-// FuzzyCall 5.根据键的前缀，模糊调用。 仅适用于无参数事件，请谨慎使用.
+// FuzzyCall 根据键的前缀，模糊调用。 仅适用于无参数事件，请谨慎使用.
 func (m *eventManage) FuzzyCall(keyPre string) {
-  sMap.Range(func(key, value interface{}) bool {
-    if keyName, ok := key.(string); ok {
-      if strings.HasPrefix(keyName, EventPrefix+keyPre) {
-        m.Call(keyName)
-      }
-    }
-    return true
-  })
+	sMap.Range(func(key, value interface{}) bool {
+		if keyName, ok := key.(string); ok {
+			if strings.HasPrefix(keyName, EventPrefix+keyPre) {
+				m.Call(keyName)
+			}
+		}
+		return true
+	})
 }
