@@ -1,0 +1,49 @@
+AppDebug: false   # 设置程序所处的模式，debug=true 调试模式，日志优先显示在控制台，debug=false 非调试模式，将写入日志文件
+
+Server:
+  Pprof: #pprof debug 定义
+    Port: 10088
+  CMPP: #移动网关配置信息
+    Port: 10086               #CMPP服务 端口
+    Multicore: true           #CMPP服务 是否开启多核
+    MaxPoolSize: 2048         #CMPP服务 消息处理线程池大小
+    ReceiveWindowSize: 1000   #CMPP服务 接收窗口大小
+    MaxConnections: 10        #CMPP服务 总体最大连接数
+  SGIP: #联通网关配置信息
+    Port: 10010
+    Multicore: true
+    MaxPoolSize: 2048
+    ReceiveWindowSize: 1000
+    MaxConnections: 10
+  SMGP: #电信网关配置信息
+    Port: 10000
+    Multicore: true
+    MaxPoolSize: 2048
+    ReceiveWindowSize: 1000
+    MaxConnections: 10
+
+Logs:
+  Default: # 默认的全部日志
+    LogName: "logs/gosms.log"
+    TextFormat: "json"                    #记录日志的格式，参数选项：console、json, console 表示一般的文本格式
+    TimePrecision: "millisecond"          #记录日志时，相关的时间精度，该参数选项：second、millisecond ，分别表示 秒 和 毫秒 ,默认为毫秒级别
+    MaxSize: 10                           #每个日志的最大尺寸(以MB为单位），超过该值，系统将会自动进行切割
+    MaxBackups: 100                       #保留旧日志最大个数
+    MaxAge: 30                            #保留旧日志最大天数
+    Compress: false                       #日志备份时，是否进行压缩
+  Error: # 仅Warn以上级别日志
+    LogName: "logs/error.log"
+    TextFormat: "console"
+    TimePrecision: "millisecond"
+    MaxSize: 1
+    MaxBackups: 7
+    MaxAge: 15
+    Compress: false
+  Test: # 测试自定义日志, 通过 my_log.New 创建
+    LogName: "logs/test.log"
+    TextFormat: "console"
+    TimePrecision: "millisecond"
+    MaxSize: 1
+    MaxBackups: 7
+    MaxAge: 15
+    Compress: false
