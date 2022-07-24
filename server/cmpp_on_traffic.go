@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/hex"
 	"fmt"
 	"strings"
 
@@ -45,7 +44,7 @@ func cmppOnTraffic(s *Server, c gnet.Conn) (action gnet.Action) {
 	// 读取消息体
 	buff, _ = c.Peek(int(pkl - 8))
 	defer func() { _, _ = c.Discard(int(pkl - 8)) }()
-	log.Debug(msg, log.Uint32("pkl", pkl), log.String("cmd", scmd), log.String("packet", hex.EncodeToString(buff)))
+	log.Debug(msg, log.Uint32("pkl", pkl), log.String("cmd", scmd), Packet2HexLogStr(buff))
 
 	//  这里遵循开闭原则，采用责任链实现，对拓展开放，对修改关闭
 	return ExecuteChain(handlers(), cmd, buff, c, s)

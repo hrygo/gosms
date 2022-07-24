@@ -8,7 +8,10 @@ import (
 	"github.com/hrygo/yaml_config"
 	"go.uber.org/zap"
 
+	"github.com/hrygo/gosmsn/codec"
 	"github.com/hrygo/gosmsn/my_errors"
+	"github.com/hrygo/gosmsn/utils"
+	"github.com/hrygo/gosmsn/utils/snowflake"
 )
 
 const (
@@ -43,6 +46,8 @@ func init() {
 		logInit()
 	}
 
+	// 4. 初始化序号器
+	SeqInit()
 }
 
 func StatChan() <-chan struct{} {
@@ -114,4 +119,16 @@ func logInit() {
 		// TODO 可添加其他日志Option，如 zap.Hooks
 	)
 	log.ResetDefault(logger)
+}
+
+func SeqInit() {
+	var b64dc = ConfigYml.GetInt64("Snowflake.B64.DC")
+	var b64worker = ConfigYml.GetInt64("Snowflake.B64.Worker")
+	var b32dc = ConfigYml.GetInt64("Snowflake.B64.DC")
+	var b23worker = ConfigYml.GetInt64("Snowflake.B64.Worker")
+	var bcd = ConfigYml.GetString("Snowflake.BCD")
+
+	codec.B64Seq = snowflake.NewSnowflake(b64dc, b64worker)
+	codec.B32Seq = utils.NewCycleSequence(int32(b32dc), int32(b23worker))
+	codec.BcdSeq = utils.NewBcdSequence(bcd)
 }

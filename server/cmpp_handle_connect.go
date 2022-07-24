@@ -31,6 +31,10 @@ var cmppConnect TrafficHandler = func(cmd uint32, buff []byte, c gnet.Conn, s *S
 // 注意：登录异常时，发送响应后，可直接关闭连接，此时无法传递 gnet.Action 了
 func handleCmppConnect(s *Server, c gnet.Conn, login *cmpp.ConnReqPkt) {
 	var msg = fmt.Sprintf("[%s] OnTraffic_HandleConnect [%v<->%v]", s.Name(), c.RemoteAddr(), c.LocalAddr())
-	log.Info(msg, log.Reflect("packet", login))
+	log.Info(msg, log.Reflect(LogKeyPacket, login))
 
+	// TODO 登录检查
+	Session(c).stat = StatLogin
+
+	// TODO  发送响应
 }

@@ -13,32 +13,26 @@ import (
 	bs "github.com/hrygo/gosmsn/bootstrap"
 )
 
-// 定义运营商常量
 const (
+	protocol = "tcp"
+
+	// 定义运营商常量
+
 	CMPP = "CMPP"
 	SMGP = "SMGP"
 	SGIP = "SGIP"
 )
 
-const (
-	protocol  = "tcp"
-	LogErrKey = "error"
-
-	CurrentValue   = "curVal"
-	Threshold      = "threshold"
-	ActiveConns    = "active_connections"
-	CurrentWinSize = "current_receive_windows_size"
-)
-
 // Server 封装 gnet server
 type Server struct {
+	sync.Mutex
 	gnet.BuiltinEventEngine
 	engine    gnet.Engine
 	protocol  string
 	port      int
 	multicore bool
 	pool      *goroutine.Pool
-	conns     sync.Map
+	sessions  sync.Map
 	window    chan struct{}
 	name      string
 }
@@ -82,6 +76,26 @@ func New(name string) *Server {
 	}
 }
 
+func (s *Server) SaveSession(c gnet.Conn) *session {
+	ses := createSession(c)
+	c.SetContext(ses)
+	s.sessions.Store(ses.id, ses)
+	return ses
+}
+
+func (s *Server) CountConnsByClientId(clientId string) (counter uint32) {
+	s.Lock()
+	defer s.Unlock()
+	s.sessions.Range(func(key, value any) bool {
+		s, ok := value.(*session)
+		if ok && s.clientId == clientId {
+			counter += 1
+		}
+		return true
+	})
+	return
+}
+
 func (s *Server) Engine() gnet.Engine {
 	return s.engine
 }
@@ -99,7 +113,7 @@ func (s *Server) Pool() *goroutine.Pool {
 }
 
 func (s *Server) Conns() *sync.Map {
-	return &s.conns
+	return &s.sessions
 }
 
 func (s *Server) Window() chan struct{} {
@@ -114,50 +128,14 @@ func (s *Server) Address() string {
 	return fmt.Sprintf("%s://:%d", s.protocol, s.port)
 }
 
-// Operation 定义操作类型
-type Operation byte
-
-const (
-	operation = "op" // 操作类型
-
-	FlowControl Operation = iota // 操作类型枚举
-	ConnectionClose
-	ActiveTest
-)
-
-func (op Operation) String() string {
-	return []string{
-		"flow_control",
-		"connection_close",
-		"active_test",
-	}[op-1]
-}
-
-func (op Operation) Field() log.Field {
-	return log.String(operation, op.String())
-}
-
-// Reason 操作对应的具体原因
-type Reason byte
-
-const (
-	reason = "reason" // 操作原因
-
-	TotalConnectionsThresholdReached Reason = iota // 操作原因类型枚举
-	TotalReceiveWindowsThresholdReached
-)
-
-func (op Reason) String() string {
-	return []string{
-		"total_connections_threshold_reached",
-		"total_receive_window_threshold_reached",
-	}[op-1]
-}
-
-func (op Reason) Field() log.Field {
-	return log.String(operation, op.String())
-}
-
-func ErrorField(err error) log.Field {
-	return log.Reflect(LogErrKey, err)
+func Session(c gnet.Conn) *session {
+	ctx := c.Context()
+	if ctx == nil {
+		return nil
+	}
+	ses, ok := ctx.(*session)
+	if ok {
+		return ses
+	}
+	return nil
 }

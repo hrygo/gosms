@@ -1,7 +1,7 @@
-AppDebug: false   # 设置程序所处的模式，debug=true 调试模式，日志优先显示在控制台，debug=false 非调试模式，将写入日志文件
+AppDebug: true   # 设置程序所处的模式，debug=true 调试模式，日志优先显示在控制台，debug=false 非调试模式，将写入日志文件
 
 Server:
-  TickDuration: 60s           # 发送心跳报文的间隔
+  TickDuration: 10s           # 发送心跳报文的间隔
   CMPP: #移动网关配置信息
     Port: 10086               #CMPP服务 端口
     Multicore: true           #CMPP服务 是否开启多核
@@ -22,6 +22,15 @@ Server:
     MaxConnections: 10
   Pprof: #pprof debug 定义
     Port: 10088
+
+Snowflake:  # 类雪花算法序号生成器配置
+  B64:
+    DC: 0         # 2bits 0-3
+    Worker: 127   # 7bits 0-127
+  B32:
+    DC: 0         # 2bits 0-3
+    Worker: 7     # 3bits 0-7
+  BCD: 010203     # 3字节（BCD 码，取值 6位十进制数）
 
 Logs:
   Default: # 默认的全部日志
