@@ -8,10 +8,10 @@ import (
 )
 
 func (s *Server) OnShutdown(eng gnet.Engine) {
-	log.Warnf("[%s] OnShutdown @ %s ...", s.name, s.Address())
+	log.Warnf("[%s] OnShutdown === %s ...", s.name, s.Address())
 	for eng.CountConnections() > 0 {
-		log.Warnf("[%s] OnShutdown @ %s active connections is %d, waiting...", s.name, s.Address(), eng.CountConnections())
+		log.Warnf("[%s] OnShutdown === %s active connections is %d, waiting...", s.name, s.Address(), eng.CountConnections())
 		time.Sleep(10 * time.Millisecond)
 	}
-	log.Warnf(" [%s] OnShutdown @ %s Completed.", s.name, s.Address())
+	log.Warnf(" [%s] OnShutdown === %s Completed.", s.name, s.Address())
 }

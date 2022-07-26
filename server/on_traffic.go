@@ -21,13 +21,13 @@ func (s *Server) OnTraffic(c gnet.Conn) (action gnet.Action) {
 // seq: request sequence ;
 // buff: packet body ;
 // next: true continue next handler, false return the action
-type TrafficHandler func(cmd uint32, buff []byte, c gnet.Conn, s *Server) (next bool, action gnet.Action)
+type TrafficHandler func(cmd, seq uint32, buff []byte, c gnet.Conn, s *Server) (next bool, action gnet.Action)
 
 // ExecuteChain all handlers
-func ExecuteChain(handlers []TrafficHandler, cmd uint32, buff []byte, c gnet.Conn, s *Server) (action gnet.Action) {
+func ExecuteChain(handlers []TrafficHandler, cmd, seq uint32, buff []byte, c gnet.Conn, s *Server) (action gnet.Action) {
 	for _, handler := range handlers {
 		handler := handler
-		next, action := handler(cmd, buff, c, s)
+		next, action := handler(cmd, seq, buff, c, s)
 		if next {
 			continue
 		} else {

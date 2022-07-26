@@ -4,263 +4,238 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/binary"
-	"errors"
+	"encoding/hex"
+	"fmt"
 
+	"github.com/hrygo/log"
+
+	"github.com/hrygo/gosmsn/client"
 	"github.com/hrygo/gosmsn/codec"
 	"github.com/hrygo/gosmsn/utils"
 )
 
-// Packet length const for cmpp connect request and response packets.
-const (
-	ConnReqPktLen   uint32 = 4 + 4 + 4 + 6 + 16 + 1 + 4 // 39d, 0x27
-	ConnRspPktLenV2 uint32 = 4 + 4 + 4 + 1 + 16 + 1     // 30d, 0x1e
-	ConnRspPktLenV3 uint32 = 4 + 4 + 4 + 4 + 16 + 1     // 33d, 0x21
-)
+const ConnectPktLen = 12 + 6 + 16 + 1 + 4
 
-// Errors for connect resp status.
-var (
-	ErrnoConnInvalidStruct  uint8 = 1
-	ErrnoConnInvalidSrcAddr uint8 = 2
-	ErrnoConnAuthFailed     uint8 = 3
-	ErrnoConnVerTooHigh     uint8 = 4
-	ErrnoConnOthers         uint8 = 5
+type Connect struct {
+	MessageHeader               // +12 = 12：消息头
+	sourceAddr          string  // +6 = 18：源地址，此处为 SP_Id
+	authenticatorSource []byte  // +16 = 34： 用于鉴别源地址。其值通过单向 MD5 hash 计算得出，表示如下: authenticatorSource = MD5(Source_Addr+9 字节的 0 +shared secret+timestamp) Shared secret 由中国移动与源地址实 体事先商定，timestamp 格式为: MMDDHHMMSS，即月日时分秒，10 位。
+	version             Version // +1 = 35：双方协商的版本号(高位 4bit 表示主 版本号,低位 4bit 表示次版本号)，对 于3.0的版本，高4bit为3，低4位为 0
+	timestamp           uint32  // +4 = 39：时间戳的明文,由客户端产生,格式为 MMDDHHMMSS，即月日时分秒，10 位数字的整型，右对齐。
 
-	ConnRspStatusErrMap = map[uint8]error{
-		ErrnoConnInvalidStruct:  errConnInvalidStruct,
-		ErrnoConnInvalidSrcAddr: errConnInvalidSrcAddr,
-		ErrnoConnAuthFailed:     errConnAuthFailed,
-		ErrnoConnVerTooHigh:     errConnVerTooHigh,
-		ErrnoConnOthers:         errConnOthers,
-	}
-
-	errConnInvalidStruct  = errors.New("connect response status: invalid protocol structure")
-	errConnInvalidSrcAddr = errors.New("connect response status: invalid source address")
-	errConnAuthFailed     = errors.New("connect response status: auth failed")
-	errConnVerTooHigh     = errors.New("connect response status: protocol version is too high")
-	errConnOthers         = errors.New("connect response status: other errors")
-)
-
-// ConnReqPkt represents a Cmpp2 or Cmpp3 connect request packet.
-//
-// when used in client side(pack), you should initialize it with
-// correct SourceAddr(SrcAddr), Secret and Version.
-//
-// when used in server side(unpack), nothing needed to be initialized.
-// unpack will fill the SourceAddr(SrcAddr), AuthSrc, Version, Timestamp
-// and SeqId
-//
-type ConnReqPkt struct {
-	SrcAddr   string
-	AuthSrc   []byte
-	Version   Version
-	Timestamp uint32
-	Secret    string
-	SeqId     uint32
+	// 非协议内容，调用ToResponse前需设置
+	secret string
 }
 
-// ConnRspPktV2 represents a Cmpp2 connect response packet.
-//
-// when used in server side(pack), you should initialize it with
-// correct Status, AuthSrc, Secret and Version.
-//
-// when used in client side(unpack), nothing needed to be initialized.
-// unpack will fill the Status, AuthImsg, Version and SeqId
-//
-type ConnRspPktV2 struct {
-	Status   uint8
-	AuthIsmg []byte
-	Version  Version
-	Secret   string
-	AuthSrc  []byte
-	SeqId    uint32
+const ConnectRspPktLenV3 = 12 + 4 + 16 + 1
+const ConnectRspPktLenV2 = 12 + 1 + 16 + 1
+
+type ConnectResp struct {
+	MessageHeader                // 协议头, 12字节
+	status            ConnStatus // 状态码，3.0版本4字节，2.0版本1字节
+	authenticatorISMG []byte     // 认证串，16字节
+	version           Version    // 版本，1字节
 }
 
-// ConnRspPktV3 represents a Cmpp3 connect response packet.
-//
-// when used in server side(pack), you should initialize it with
-// correct Status, AuthSrc, Secret and Version.
-//
-// when used in client side(unpack), nothing needed to be initialized.
-// unpack will fill the Status, AuthImsg, Version and SeqId
-//
-type ConnRspPktV3 struct {
-	Status   uint32
-	AuthIsmg []byte
-	Version  Version
-	Secret   string
-	AuthSrc  []byte
-	SeqId    uint32
-}
-
-// Pack packs the ConnReqPkt to bytes stream for client side.
-// Before calling Pack, you should initialize a ConnReqPkt variable
-// with correct SourceAddr(SrcAddr), Secret and Version.
-func (p *ConnReqPkt) Pack(seqId uint32) ([]byte, error) {
-	var w = codec.NewPacketWriter(ConnReqPktLen)
-
-	// Pack header
-	w.WriteInt(binary.BigEndian, ConnReqPktLen)
-	w.WriteInt(binary.BigEndian, CMPP_CONNECT)
-	w.WriteInt(binary.BigEndian, seqId)
-	p.SeqId = seqId
-
+func NewConnect(cl *client.Client, seq uint32) *Connect {
+	con := &Connect{}
+	con.TotalLength = ConnectPktLen
+	con.CommandId = CMPP_CONNECT
+	con.SequenceId = seq
+	con.version = Version(cl.Version)
+	con.sourceAddr = cl.ClientId
 	var ts string
-	if p.Timestamp == 0 {
-		ts, p.Timestamp = utils.Now() // default: current time.
-	} else {
-		ts = utils.TimeStamp2Str(p.Timestamp)
-	}
-
-	// Pack body
-	srcAddr := utils.OctetString(p.SrcAddr, 6)
-	w.WriteString(srcAddr)
-
-	md5str := md5.Sum(bytes.Join([][]byte{
-		[]byte(srcAddr),
+	ts, con.timestamp = utils.Now()
+	authMd5 := md5.Sum(bytes.Join([][]byte{
+		[]byte(cl.ClientId),
 		make([]byte, 9),
-		[]byte(p.Secret),
+		[]byte(cl.SharedSecret),
 		[]byte(ts),
 	}, nil))
-	p.AuthSrc = md5str[:]
-
-	w.WriteBytes(p.AuthSrc)
-	w.WriteInt(binary.BigEndian, p.Version)
-	w.WriteInt(binary.BigEndian, p.Timestamp)
-
-	return w.Bytes()
+	con.authenticatorSource = authMd5[:]
+	return con
 }
 
-// Unpack the binary byte stream to a ConnReqPkt variable.
-// Usually it is used in server side. After unpack, you will get SeqId, SourceAddr,
-// AuthenticatorSource, Version and Timestamp.
-func (p *ConnReqPkt) Unpack(data []byte) error {
-	var r = codec.NewPacketReader(data)
-
-	// Sequence Id
-	r.ReadInt(binary.BigEndian, &p.SeqId)
-
-	// Body: Source_Addr
-	var sa = make([]byte, 6)
-	r.ReadBytes(sa)
-	p.SrcAddr = string(sa)
-
-	// Body: AuthSrc
-	var as = make([]byte, 16)
-	r.ReadBytes(as)
-	p.AuthSrc = as
-
-	// Body: Version
-	r.ReadInt(binary.BigEndian, &p.Version)
-	// Body: timestamp
-	r.ReadInt(binary.BigEndian, &p.Timestamp)
-
-	return r.Error()
+func (c *Connect) Encode() []byte {
+	frame := c.MessageHeader.Encode()
+	if len(frame) == ConnectPktLen && c.TotalLength == ConnectPktLen {
+		copy(frame[12:18], c.sourceAddr)
+		copy(frame[18:34], c.authenticatorSource)
+		frame[34] = byte(c.version)
+		binary.BigEndian.PutUint32(frame[35:39], c.timestamp)
+		return frame
+	}
+	return nil
 }
 
-// Pack packs the ConnRspPktV2 to bytes stream for server side.
-// Before calling Pack, you should initialize a ConnRspPktV2 variable
-// with correct Status,AuthenticatorSource, Secret and Version.
-func (p *ConnRspPktV2) Pack(seqId uint32) ([]byte, error) {
-	var w = codec.NewPacketWriter(ConnRspPktLenV2)
-
-	// pack header
-	w.WriteInt(binary.BigEndian, ConnRspPktLenV2)
-	w.WriteInt(binary.BigEndian, CMPP_CONNECT_RESP)
-	w.WriteInt(binary.BigEndian, seqId)
-	p.SeqId = seqId
-
-	// pack body
-	w.WriteInt(binary.BigEndian, p.Status)
-
-	md5str := md5.Sum(bytes.Join([][]byte{
-		{p.Status},
-		[]byte(p.AuthSrc),
-		[]byte(p.Secret),
-	}, nil))
-	p.AuthIsmg = md5str[:]
-	w.WriteBytes(p.AuthIsmg)
-
-	w.WriteInt(binary.BigEndian, p.Version)
-
-	return w.Bytes()
+func (c *Connect) Decode(seq uint32, frame []byte) error {
+	c.TotalLength = ConnectPktLen
+	c.CommandId = CMPP_CONNECT
+	c.SequenceId = seq
+	c.sourceAddr = utils.TrimStr(frame[0:6])
+	c.authenticatorSource = frame[6:22]
+	c.version = Version(frame[22])
+	c.timestamp = binary.BigEndian.Uint32(frame[23:27])
+	return nil
 }
 
-// Unpack the binary byte stream to a ConnRspPktV2 variable.
-// Usually it is used in client side. After unpack, you will get SeqId, Status,
-// AuthenticatorIsmg, and Version.
-// Parameter data contains seqId in header and the whole packet body.
-func (p *ConnRspPktV2) Unpack(data []byte) error {
-	var r = codec.NewPacketReader(data)
-
-	// Sequence Id
-	r.ReadInt(binary.BigEndian, &p.SeqId)
-
-	// Body: Status
-	r.ReadInt(binary.BigEndian, &p.Status)
-
-	// Body: AuthenticatorISMG
-	var s = make([]byte, 16)
-	r.ReadBytes(s)
-	p.AuthIsmg = s
-
-	// Body: Version
-	r.ReadInt(binary.BigEndian, &p.Version)
-	return r.Error()
+func (c *Connect) Log() []log.Field {
+	ls := c.MessageHeader.Log()
+	ls = append(ls,
+		log.String("clientId", c.sourceAddr),
+		log.String("md5", hex.EncodeToString(c.authenticatorSource)),
+		log.Uint8("version", uint8(c.version)),
+		log.String("timestamp", fmt.Sprintf("%010d", c.timestamp)))
+	return ls
 }
 
-// Pack packs the ConnRspPktV3 to bytes stream for server side.
-// Before calling Pack, you should initialize a ConnRspPktV3 variable
-// with correct Status,AuthenticatorSource, Secret and Version.
-func (p *ConnRspPktV3) Pack(seqId uint32) ([]byte, error) {
-	var w = codec.NewPacketWriter(ConnRspPktLenV3)
+func (c *Connect) SourceAddr() string {
+	return c.sourceAddr
+}
+func (c *Connect) AuthenticatorSource() []byte {
+	return c.authenticatorSource
+}
 
-	// pack header
-	w.WriteInt(binary.BigEndian, ConnRspPktLenV3)
-	w.WriteInt(binary.BigEndian, CMPP_CONNECT_RESP)
-	w.WriteInt(binary.BigEndian, seqId)
-	p.SeqId = seqId
+func (c *Connect) Timestamp() uint32 {
+	return c.timestamp
+}
 
-	// pack body
-	w.WriteInt(binary.BigEndian, p.Status)
+func (c *Connect) Version() Version {
+	return c.version
+}
 
-	var statusBuf = new(bytes.Buffer)
-	err := binary.Write(statusBuf, binary.BigEndian, p.Status)
-	if err != nil {
-		return nil, err
+func (c *Connect) Check(cl *client.Client) ConnStatus {
+	if cl == nil {
+		return ConnStatusInvalidSrcAddr
+	}
+	if !c.version.MajorMatch(cl.Version) {
+		return ConnStatusVerTooHigh
 	}
 
-	md5str := md5.Sum(bytes.Join([][]byte{
-		statusBuf.Bytes(),
-		[]byte(p.AuthSrc),
-		[]byte(p.Secret),
+	authSource := c.authenticatorSource
+	authMd5 := md5.Sum(bytes.Join([][]byte{
+		[]byte(cl.ClientId),
+		make([]byte, 9),
+		[]byte(cl.SharedSecret),
+		[]byte(utils.TimeStamp2Str(c.timestamp)),
 	}, nil))
-	p.AuthIsmg = md5str[:]
-	w.WriteBytes(p.AuthIsmg)
-
-	w.WriteInt(binary.BigEndian, p.Version)
-
-	return w.Bytes()
+	log.Debugf("[AuthCheck] input  : %x", authSource)
+	log.Debugf("[AuthCheck] compute: %x", authMd5)
+	ok := bytes.Equal(authSource, authMd5[:])
+	if ok {
+		return ConnStatusOK
+	}
+	return ConnStatusAuthFailed
 }
 
-// Unpack the binary byte stream to a ConnRspPktV3 variable.
-// Usually it is used in client side. After unpack, you will get SeqId, Status,
-// AuthenticatorIsmg, and Version.
-// Parameter data contains seqId in header and the whole packet body.
-func (p *ConnRspPktV3) Unpack(data []byte) error {
-	var r = codec.NewPacketReader(data)
+// ToResponse 由Request生成Response，调用前需要SetSecret
+func (c *Connect) ToResponse(code uint32) codec.Pdu {
+	rsp := &ConnectResp{}
+	// 3.x 与 2.x Status长度不同
+	if V30.MajorMatchV(c.version) {
+		rsp.TotalLength = ConnectRspPktLenV3
+	} else {
+		rsp.TotalLength = ConnectRspPktLenV2
+	}
+	rsp.CommandId = CMPP_CONNECT_RESP
+	rsp.SequenceId = c.SequenceId
+	rsp.status = ConnStatus(code)
 
-	// Sequence Id
-	r.ReadInt(binary.BigEndian, &p.SeqId)
+	// authenticatorISMG =MD5 ( status+authenticatorSource+shar ed secret)
+	var bs []byte
+	if V30.MajorMatchV(c.version) {
+		bs = []byte{0, 0, 0, byte(rsp.status)}
+	} else {
+		bs = []byte{byte(rsp.status)}
+	}
 
-	// Body: Status
-	r.ReadInt(binary.BigEndian, &p.Status)
+	md5Auth := md5.Sum(bytes.Join([][]byte{
+		bs,
+		[]byte(c.sourceAddr),
+		[]byte(c.secret),
+	}, nil))
+	rsp.authenticatorISMG = md5Auth[:]
+	rsp.version = c.version
+	return rsp
+}
 
-	// Body: AuthenticatorISMG
-	var s = make([]byte, 16)
-	r.ReadBytes(s)
-	p.AuthIsmg = s
+func (c *Connect) SetSecret(secret string) {
+	c.secret = secret
+}
 
-	// Body: Version
-	r.ReadInt(binary.BigEndian, &p.Version)
-	return r.Error()
+// 以下为Response
+
+func (r *ConnectResp) Encode() []byte {
+	frame := r.MessageHeader.Encode()
+	var index int
+	if len(frame) == int(r.TotalLength) {
+		index = 12
+		if V30.MajorMatchV(r.version) {
+			binary.BigEndian.PutUint32(frame[index:index+4], uint32(r.status))
+			index += 4
+		} else {
+			frame[index] = byte(r.status)
+			index++
+		}
+		copy(frame[index:index+16], r.authenticatorISMG)
+		index += 16
+		frame[index] = byte(r.version)
+	}
+	return frame
+}
+
+func (r *ConnectResp) Decode(seq uint32, frame []byte) error {
+	if V30.MajorMatchV(r.version) {
+		r.TotalLength = ConnectRspPktLenV3
+	} else {
+		r.TotalLength = ConnectRspPktLenV2
+	}
+	r.CommandId = CMPP_CONNECT_RESP
+	r.SequenceId = seq
+
+	var index int
+	if V30.MajorMatchV(r.version) {
+		index += 3
+	}
+	r.status = ConnStatus(frame[index])
+	index += 1
+	r.authenticatorISMG = frame[index : index+16]
+	index += 16
+	r.version = Version(frame[index])
+	return nil
+}
+
+func (r *ConnectResp) Status() ConnStatus {
+	return r.status
+}
+
+func (r *ConnectResp) Log() []log.Field {
+	ls := r.MessageHeader.Log()
+	ls = append(ls,
+		log.Uint8("status", uint8(r.status)),
+		log.String("md5", hex.EncodeToString(r.authenticatorISMG)),
+		log.Uint8("version", uint8(r.version)))
+	return ls
+}
+
+type ConnStatus byte
+
+const (
+	ConnStatusOK ConnStatus = iota
+	ConnStatusInvalidStruct
+	ConnStatusInvalidSrcAddr
+	ConnStatusAuthFailed
+	ConnStatusVerTooHigh
+	ConnStatusOthers
+)
+
+func (i ConnStatus) String() string {
+	return []string{
+		"成功",
+		"消息结构错",
+		"非法源地址",
+		"认证错",
+		"版本太高",
+		"其他错误",
+	}[i]
 }

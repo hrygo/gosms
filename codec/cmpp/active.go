@@ -1,77 +1,54 @@
 package cmpp
 
 import (
-	"encoding/binary"
+	"github.com/hrygo/log"
 
 	"github.com/hrygo/gosmsn/codec"
 )
 
-// Packet length const for cmpp active test request and response packets.
-const (
-	ActiveTestReqPktLen uint32 = 12     // 12d, 0xc
-	ActiveTestRspPktLen uint32 = 12 + 1 // 13d, 0xd
-)
+type ActiveTest MessageHeader
 
-type ActiveTestReqPkt struct {
-	// session info
-	SeqId uint32
-}
-type ActiveTestRspPkt struct {
-	Reserved uint8
-	// session info
-	SeqId uint32
+type ActiveTestRsp MessageHeader
+
+func NewActiveTest(seq uint32) *ActiveTest {
+	return &ActiveTest{TotalLength: HeadLen, CommandId: CMPP_ACTIVE_TEST, SequenceId: seq}
 }
 
-// Pack packs the CmppActiveTestReqPkt to bytes stream for client side.
-func (p *ActiveTestReqPkt) Pack(seqId uint32) ([]byte, error) {
-	var pktLen = ActiveTestReqPktLen
-
-	var w = codec.NewPacketWriter(pktLen)
-
-	// Pack header
-	w.WriteInt(binary.BigEndian, pktLen)
-	w.WriteInt(binary.BigEndian, CMPP_ACTIVE_TEST)
-	w.WriteInt(binary.BigEndian, seqId)
-	p.SeqId = seqId
-
-	return w.Bytes()
+func (at *ActiveTest) Encode() []byte {
+	return (*MessageHeader)(at).Encode()
 }
 
-// Unpack the binary byte stream to a CmppActiveTestReqPkt variable.
-// After unpack, you will get all value of fields in
-// CmppActiveTestReqPkt struct.
-func (p *ActiveTestReqPkt) Unpack(data []byte) error {
-	var r = codec.NewPacketReader(data)
-
-	// Sequence Id
-	r.ReadInt(binary.BigEndian, &p.SeqId)
-	return r.Error()
+func (at *ActiveTest) Decode(seq uint32, _ []byte) error {
+	at.TotalLength = 12
+	at.CommandId = CMPP_ACTIVE_TEST
+	at.SequenceId = seq
+	return nil
 }
 
-// Pack packs the CmppActiveTestRspPkt to bytes stream for client side.
-func (p *ActiveTestRspPkt) Pack(seqId uint32) ([]byte, error) {
-	var pktLen = ActiveTestRspPktLen
-
-	var w = codec.NewPacketWriter(pktLen)
-
-	// Pack header
-	w.WriteInt(binary.BigEndian, pktLen)
-	w.WriteInt(binary.BigEndian, CMPP_ACTIVE_TEST_RESP)
-	w.WriteInt(binary.BigEndian, seqId)
-	w.WriteByte(p.Reserved)
-	p.SeqId = seqId
-
-	return w.Bytes()
+func (at *ActiveTest) ToResponse(_ uint32) codec.Pdu {
+	rsp := &ActiveTestRsp{}
+	rsp.TotalLength = 12 + 1
+	rsp.CommandId = CMPP_ACTIVE_TEST_RESP
+	rsp.SequenceId = at.SequenceId
+	return rsp
 }
 
-// Unpack the binary byte stream to a CmppActiveTestRspPkt variable.
-// After unpack, you will get all value of fields in
-// CmppActiveTestRspPkt struct.
-func (p *ActiveTestRspPkt) Unpack(data []byte) error {
-	var r = codec.NewPacketReader(data)
+func (at *ActiveTest) Log() []log.Field {
+	return (*MessageHeader)(at).Log()
+}
 
-	// Sequence Id
-	r.ReadInt(binary.BigEndian, &p.SeqId)
-	p.Reserved = r.ReadByte()
-	return r.Error()
+func (at *ActiveTestRsp) Encode() []byte {
+	ls := (*MessageHeader)(at).Encode()
+	return append(ls, 0)
+}
+
+func (at *ActiveTestRsp) Decode(seqId uint32, _ []byte) error {
+	at.TotalLength = HeadLen + 1
+	at.CommandId = CMPP_ACTIVE_TEST_RESP
+	at.SequenceId = seqId
+	return nil
+}
+
+func (at *ActiveTestRsp) Log() []log.Field {
+	return (*MessageHeader)(at).Log()
 }

@@ -78,6 +78,7 @@ func New(name string) *Server {
 
 func (s *Server) SaveSession(c gnet.Conn) *session {
 	ses := createSession(c)
+	ses.serverName = s.name
 	c.SetContext(ses)
 	s.sessions.Store(ses.id, ses)
 	return ses

@@ -6,7 +6,7 @@ import (
 )
 
 func (s *Server) OnBoot(eng gnet.Engine) (action gnet.Action) {
-	log.Warnf("[%s] OnBoot @ %s", s.name, s.Address())
+	log.Warnf("[%s] OnBoot === %s", s.name, s.Address())
 	s.engine = eng
 	return
 }

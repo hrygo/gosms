@@ -13,7 +13,7 @@ import (
 
 // 优雅停机相关代码
 
-const ShutdownEventPrefix = "graceful_shutdown_"
+const ShutdownEventPrefix = "graceful_shutdown_event_"
 
 func init() {
 	go func() {
@@ -31,6 +31,6 @@ func init() {
 		log.Warn(fmt.Sprintf("收到信号 [%s] 进程即将结束！", received.String()))
 
 		// 优雅停机的善后处理
-		event_manage.CreateEventManageFactory().FuzzyCall(ShutdownEventPrefix)
+		event_manage.CreateEventManage(ShutdownEventPrefix).FuzzyCall()
 	}()
 }

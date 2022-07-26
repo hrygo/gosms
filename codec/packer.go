@@ -3,11 +3,9 @@ package codec
 import (
 	"encoding/binary"
 	"errors"
+
+	"github.com/hrygo/log"
 )
-
-// Common errors.
-
-var ErrMethodParamsInvalid = errors.New("params passed to method is invalid")
 
 // Protocol errors.
 
@@ -15,9 +13,25 @@ var ErrTotalLengthInvalid = errors.New("total_length in Packet data is invalid")
 var ErrCommandIdInvalid = errors.New("command_id in Packet data is invalid")
 var ErrCommandIdNotSupported = errors.New("command_id in Packet data is not supported")
 
-type Packer interface {
-	Pack(seqId uint32) ([]byte, error)
-	Unpack(data []byte) error
+type Logger interface {
+	Log() []log.Field
+}
+
+type IHead interface {
+	Logger
+	Encode() []byte
+	Decode([]byte) error
+}
+
+type Pdu interface {
+	Logger
+	Encode() []byte
+	Decode(seq uint32, frame []byte) error
+}
+
+type RequestPdu interface {
+	Pdu
+	ToResponse(code uint32) Pdu
 }
 
 // OpError is the error type usually returned by functions in the packet
@@ -54,12 +68,11 @@ func (e *OpError) Op() string {
 	return e.op
 }
 
-func UnpackHead(h []byte) (pkl, cmd uint32) {
-	if len(h) < 8 {
-		return 0, 0
-	} else {
+func UnpackHead(h []byte) (pkl, cmd, seq uint32) {
+	if len(h) >= 12 {
 		pkl = binary.BigEndian.Uint32(h[0:4])
 		cmd = binary.BigEndian.Uint32(h[4:8])
-		return
+		seq = binary.BigEndian.Uint32(h[8:12])
 	}
+	return
 }

@@ -16,6 +16,7 @@ type session struct {
 	id          uint64
 	conn        gnet.Conn
 	clientId    string    // 客户端识别号，由服务端分配
+	serverName  string    // 连接的Server的name
 	ver         byte      // 协议版本号
 	stat        stat      // 会话状态
 	nAt         byte      // 未接收到响应的心跳次数
@@ -83,4 +84,8 @@ func (s *session) LastUseTime() time.Time {
 
 func (s *session) LogSid() log.Field {
 	return log.Uint64(LogKeySessionId, s.Id())
+}
+
+func (s *session) ServerName() string {
+	return s.serverName
 }

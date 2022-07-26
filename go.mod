@@ -4,12 +4,13 @@ go 1.18
 
 require (
 	github.com/hrygo/log v1.2.1
-	github.com/hrygo/yaml_config v1.2.0
+	github.com/hrygo/yaml_config v1.2.2
 	github.com/panjf2000/ants/v2 v2.4.8
 	github.com/panjf2000/gnet/v2 v2.1.0
 	github.com/stretchr/testify v1.7.2
 	go.uber.org/zap v1.21.0
 	golang.org/x/text v0.3.7
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -33,5 +34,4 @@ require (
 	gopkg.in/ini.v1 v1.66.6 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

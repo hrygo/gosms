@@ -1,41 +1,41 @@
 package event_manage
 
 import (
-  "log"
-  "testing"
+	"log"
+	"testing"
 )
 
 func TestEventManage(t *testing.T) {
-  em := CreateEventManageFactory()
+	em := CreateEventManage("test_event_")
 
-  em.Register("println", log.Println)
-  em.Call("println", "hello", "world")
+	em.Register("println", log.Println)
+	em.Call("println", "hello", "world")
 
-  em.Register("no_args_f1", f1)
-  em.Register("no_args_f2", f2)
-  em.Register("no_args_f3", f3)
-  em.Register("no_args_f3", f3)
-  em.FuzzyCall("no_args_")
+	em.Register("no_args_f1", f1)
+	em.Register("no_args_f2", f2)
+	em.Register("no_args_f3", f3)
+	em.Register("no_args_f3", f3)
+	em.FuzzyCall()
 
-  em.Delete("no_args_f3")
-  em.Call("no_args_f3")
+	em.Delete("no_args_f3")
+	em.Call("no_args_f3")
 
-  em.FuzzyCall("no_args_")
+	em.FuzzyCall()
 
-  fn, exits := em.Get("println")
-  if exits {
-    fn("hello world end.")
-  }
+	fn, exits := em.Get("println")
+	if exits {
+		fn("hello world end.")
+	}
 }
 
 var f1 = func(args ...interface{}) {
-  log.Println("call f1")
+	log.Println("call f1")
 }
 
 var f2 = func(args ...interface{}) {
-  log.Println("call f2")
+	log.Println("call f2")
 }
 
 var f3 = func(args ...interface{}) {
-  log.Println("call f3")
+	log.Println("call f3")
 }

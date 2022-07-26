@@ -21,12 +21,22 @@ func (t Version) String() string {
 	}
 }
 
+// MajorMatch 主版本相匹配
+func (t Version) MajorMatch(v uint8) bool {
+	return uint8(t)&0xf0 == v&0xf0
+}
+
+// MajorMatchV 主版本相匹配
+func (t Version) MajorMatchV(v Version) bool {
+	return uint8(t)&0xf0 == uint8(v)&0xf0
+}
+
 const (
-	CMPP_HEADER_LEN  uint32 = 12
-	CMPP2_PACKET_MAX uint32 = 2477
-	CMPP2_PACKET_MIN uint32 = 12
-	CMPP3_PACKET_MAX uint32 = 3335
-	CMPP3_PACKET_MIN uint32 = 12
+	HeadLen     uint32 = 12
+	PacketMin   uint32 = HeadLen
+	PacketMaxV2 uint32 = 2477
+	PacketMaxV3 uint32 = 3335
+	PacketMax   uint32 = PacketMaxV3
 )
 
 type CommandId uint32

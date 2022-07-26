@@ -38,22 +38,22 @@ func TimeStamp2Str(t uint32) string {
 	return fmt.Sprintf("%010d", t)
 }
 
-func Utf8ToUcs2(in string) (string, error) {
+func Utf8ToUcs2(in string) ([]byte, error) {
 	if !utf8.ValidString(in) {
-		return "", ErrInvalidUtf8Rune
+		return nil, ErrInvalidUtf8Rune
 	}
 
 	r := bytes.NewReader([]byte(in))
 	t := transform.NewReader(r, unicode.UTF16(unicode.BigEndian, unicode.IgnoreBOM).NewEncoder()) // UTF-16 bigendian, no-bom
 	out, err := ioutil.ReadAll(t)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return string(out), nil
+	return out, nil
 }
 
-func Ucs2ToUtf8(in string) (string, error) {
-	r := bytes.NewReader([]byte(in))
+func Ucs2ToUtf8(in []byte) (string, error) {
+	r := bytes.NewReader(in)
 	t := transform.NewReader(r, unicode.UTF16(unicode.BigEndian, unicode.IgnoreBOM).NewDecoder()) // UTF-16 bigendian, no-bom
 	out, err := ioutil.ReadAll(t)
 	if err != nil {
@@ -97,6 +97,19 @@ func OctetString(s string, fixedLength int) string {
 	}
 
 	return strings.Join([]string{s, string(make([]byte, fixedLength-length))}, "")
+}
+
+func TrimOctetString(in []byte) []byte {
+	i := bytes.IndexByte(in, 0)
+	if i == -1 {
+		return in
+	} else {
+		return in[:i]
+	}
+}
+
+func TrimStr(in []byte) string {
+	return string(TrimOctetString(in))
 }
 
 // ToTPUDHISlices 拆分为长短信切片

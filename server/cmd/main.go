@@ -3,9 +3,11 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math/rand"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
+	"time"
 
 	"github.com/hrygo/log"
 
@@ -14,6 +16,7 @@ import (
 )
 
 func main() {
+	rand.Seed(time.Now().Unix()) // 随机种子
 	log.Infof("current pid is %s.", savePid("_.pid"))
 	pprofDebug()
 

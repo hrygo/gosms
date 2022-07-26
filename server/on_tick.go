@@ -13,8 +13,8 @@ import (
 )
 
 func (s *Server) OnTick() (delay time.Duration, action gnet.Action) {
-	msg := fmt.Sprintf("[%s] OnTick @ %s", s.name, s.Address())
-	log.Info(msg, log.Int(LogKeyActiveConns, s.engine.CountConnections()))
+	msg := fmt.Sprintf("[%s] OnTick === %s", s.name, s.Address())
+	log.Info(msg, CCWW(s)...)
 
 	s.sessions.Range(func(key, value interface{}) bool {
 		session, ok := value.(*session)
@@ -24,26 +24,37 @@ func (s *Server) OnTick() (delay time.Duration, action gnet.Action) {
 
 			// 发送心跳测试
 			if pass && session.stat == StatLogin {
-				// activeTest(s, session)
+				activeTest(s, session)
 			}
 
 			// 关闭心跳未正常响应的连接
-			// if pass &&
-
+			if pass {
+				activeTestNoneResponseCheck(s, session)
+			}
 		}
 		return true
 	})
 	return bs.ConfigYml.GetDuration("Server.TickDuration"), gnet.None
 }
 
+func activeTestNoneResponseCheck(s *Server, session *session) {
+	if session.nAt > 2 {
+		msg := fmt.Sprintf("[%s] OnTick ===", s.name)
+		conn := session.Conn()
+		_ = conn.Close()
+		log.Warn(msg, JoinLog(SSR(session, conn.RemoteAddr()),
+			ConnectionClose.Field(), NoneResponseActiveTestCountThresholdReached.Field())...)
+	}
+}
+
 func closeCheck(s *Server, ses *session) (pass bool) {
 	pass = true
-	// 5分钟未使用的连接
-	if ses.LastUseTime().Add(5 * time.Second).Before(time.Now()) {
-		msg := fmt.Sprintf("[%s] OnTick [%v<->%v]", s.name, ses.conn.RemoteAddr(), ses.conn.LocalAddr())
+	confTime := bs.ConfigYml.GetDuration("Server.ForceCloseConnTime")
+	if ses.LastUseTime().Add(confTime).Before(time.Now()) {
+		msg := fmt.Sprintf("[%s] OnTick ===", s.name)
 		conn := ses.Conn()
 		_ = conn.Close()
-		log.Warn(msg, ses.LogSid(), ConnectionClose.Field(), NoEffectiveActionTimeThresholdReached.Field())
+		log.Warn(msg, JoinLog(SSR(ses, conn.RemoteAddr()), ConnectionClose.Field(), NoEffectiveActionTimeThresholdReached.Field())...)
 		pass = false
 	}
 	return
@@ -51,27 +62,32 @@ func closeCheck(s *Server, ses *session) (pass bool) {
 
 func activeTest(s *Server, ses *session) {
 	_ = s.pool.Submit(func() {
-		msg := fmt.Sprintf("[%s] OnTick [%v<->%v]", s.name, ses.conn.RemoteAddr(), ses.conn.LocalAddr())
-		var active codec.Packer
-		var seq = uint32(codec.B32Seq.NextVal())
-		switch s.name {
-		case CMPP:
-			active = &cmpp.ActiveTestReqPkt{SeqId: seq}
-		case SGIP:
-			// active =
-		case SMGP:
-			// active =
-		}
-		pack, err := active.Pack(seq)
-		if err != nil {
-			log.Error(msg, ses.LogSid(), ActiveTest.Field(), ErrorField(err))
-			return
-		}
-		err = ses.conn.AsyncWrite(pack, nil)
-		if err == nil {
-			log.Info(msg, ses.LogSid(), ActiveTest.Field(), Packet2HexLogStr(pack))
-		} else {
-			log.Error(msg, ses.LogSid(), ActiveTest.Field(), ErrorField(err))
+		// 如果适用时间在1分钟前则发送心跳
+		if ses.lastUseTime.Add(time.Minute).Before(time.Now()) {
+			msg := fmt.Sprintf("[%s] OnTick %s", s.name, SD)
+			var active codec.RequestPdu
+			var seq = uint32(codec.B32Seq.NextVal())
+			switch s.name {
+			case CMPP:
+				active = cmpp.NewActiveTest(seq)
+			case SGIP:
+				// active =
+			case SMGP:
+				// active =
+			}
+			pack := active.Encode()
+			err := ses.conn.AsyncWrite(pack, func(c gnet.Conn) error {
+				ses.Lock()
+				ses.Unlock()
+				ses.lastUseTime = time.Now()
+				ses.nAt += 1
+				return nil
+			})
+			if err == nil {
+				log.Info(msg, ses.LogSid(), ActiveTest.Field(), Packet2HexLogStr(pack))
+			} else {
+				log.Error(msg, ses.LogSid(), ActiveTest.Field(), ErrorField(err))
+			}
 		}
 	})
 }

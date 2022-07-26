@@ -12,25 +12,27 @@ import (
 )
 
 func cmppOnTraffic(s *Server, c gnet.Conn) (action gnet.Action) {
-	var msg = fmt.Sprintf("[%s] OnTraffic [%v<->%v]", s.name, c.RemoteAddr(), c.LocalAddr())
-
+	var msg = fmt.Sprintf("[%s] OnTraffic %s", s.name, RC)
+	session := Session(c)
 	// 检查缓存
 	if c.InboundBuffered() < 12 {
 		return
 	}
 
-	buff, _ := c.Peek(8)
+	buff, _ := c.Peek(12)
 
 	// 消息头检查
-	pkl, cmd := codec.UnpackHead(buff)
-	if pkl > cmpp.CMPP3_PACKET_MAX || pkl < 12 {
-		log.Error(msg, ErrorField(codec.NewOpError(codec.ErrTotalLengthInvalid, fmt.Sprintf("cmppOnTraffic read pack len is %d", pkl))))
+	pkl, cmd, seq := codec.UnpackHead(buff)
+	if pkl > cmpp.PacketMax || pkl < 12 {
+		log.Error(msg, JoinLog(SSR(session, c.RemoteAddr()),
+			ErrorField(codec.NewOpError(codec.ErrTotalLengthInvalid, fmt.Sprintf("cmppOnTraffic read pack len is %d", pkl))))...)
 		return gnet.Close
 	}
 
 	scmd := cmpp.CommandId(cmd).String()
 	if strings.HasSuffix(scmd, "UNKNOWN") {
-		log.Error(msg, ErrorField(codec.NewOpError(codec.ErrCommandIdInvalid, fmt.Sprintf("cmppOnTraffic read command is  %x(%s)", cmd, scmd))))
+		log.Error(msg, JoinLog(SSR(session, c.RemoteAddr()),
+			ErrorField(codec.NewOpError(codec.ErrCommandIdInvalid, fmt.Sprintf("cmppOnTraffic read command is %s", scmd))))...)
 		return gnet.Close
 	}
 
@@ -39,15 +41,15 @@ func cmppOnTraffic(s *Server, c gnet.Conn) (action gnet.Action) {
 		return
 	}
 	// 消息体通过长度检查后,跳过消息头的前8字节
-	_, _ = c.Discard(8)
+	_, _ = c.Discard(12)
 
 	// 读取消息体
-	buff, _ = c.Peek(int(pkl - 8))
-	defer func() { _, _ = c.Discard(int(pkl - 8)) }()
-	log.Debug(msg, log.Uint32("pkl", pkl), log.String("cmd", scmd), Packet2HexLogStr(buff))
+	buff, _ = c.Peek(int(pkl - 12))
+	defer func() { _, _ = c.Discard(int(pkl - 12)) }()
+	log.Debug(msg, JoinLog(SSR(session, c.RemoteAddr()), Packet2HexLogStr(buff))...)
 
 	//  这里遵循开闭原则，采用责任链实现，对拓展开放，对修改关闭
-	return ExecuteChain(handlers(), cmd, buff, c, s)
+	return ExecuteChain(handlers(), cmd, seq, buff, c, s)
 }
 
 func handlers() []TrafficHandler {

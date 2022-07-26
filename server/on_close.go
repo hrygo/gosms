@@ -13,8 +13,9 @@ func (s *Server) OnClose(c gnet.Conn, e error) (action gnet.Action) {
 	c.SetContext(nil)
 	ses.conn = nil
 
-	msg := fmt.Sprintf("[%s] OnClose [%v<->%v]", s.name, c.RemoteAddr(), c.LocalAddr())
-	log.Warn(msg, ses.LogSid(), ConnectionClose.Field(), log.Int(LogKeyActiveConns, s.engine.CountConnections()), ErrorField(e))
+	msg := fmt.Sprintf("[%s] OnClose ===", s.name)
+	fields := JoinLog(SSR(ses, c.RemoteAddr()), ConnectionClose.Field(), ErrorField(e))
+	log.Warn(msg, JoinLog(fields, CCWW(s)...)...)
 	ses = nil
 	return
 }
