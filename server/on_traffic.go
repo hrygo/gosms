@@ -1,7 +1,12 @@
 package server
 
 import (
+	"fmt"
+
+	"github.com/hrygo/log"
 	"github.com/panjf2000/gnet/v2"
+
+	"github.com/hrygo/gosmsn/my_errors"
 )
 
 func (s *Server) OnTraffic(c gnet.Conn) (action gnet.Action) {
@@ -35,4 +40,18 @@ func ExecuteChain(handlers []TrafficHandler, cmd, seq uint32, buff []byte, c gne
 		}
 	}
 	return action
+}
+
+func sessionCheck(s *session) bool {
+	if s.stat != StatLogin {
+		log.Error(fmt.Sprintf("[%s] OnTraffic %s", s.ServerName(), RC),
+			FlatMapLog(s.LogSession(), []log.Field{OpConnectionClose.Field(), SErrField(my_errors.ErrorsDecodePacketBody)})...)
+		return false
+	}
+	return true
+}
+
+func decodeErrorLog(s *session, buff []byte) {
+	log.Error(fmt.Sprintf("[%s] OnTraffic %s", s.ServerName(), RC),
+		FlatMapLog(s.LogSession(), []log.Field{OpConnectionClose.Field(), SErrField(my_errors.ErrorsDecodePacketBody), Packet2HexLogStr(buff)})...)
 }

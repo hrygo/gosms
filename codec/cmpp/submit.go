@@ -328,34 +328,6 @@ func (r *SubmitResp) Log() (rt []log.Field) {
 	)
 	return
 }
-func MsgSlices(fmt uint8, content string) (slices [][]byte) {
-	var msgBytes []byte
-	// 含中文
-	if fmt == 8 {
-		msgBytes, _ = utils.Utf8ToUcs2(content)
-		slices = utils.ToTPUDHISlices(msgBytes, 140)
-	} else {
-		// 纯英文
-		msgBytes = []byte(content)
-		slices = utils.ToTPUDHISlices(msgBytes, 160)
-	}
-	return
-}
-
-// MsgFmt 通过消息内容判断，设置编码格式。
-// 如果是纯拉丁字符采用0：ASCII串
-// 如果含多字节字符，这采用8：UCS-2编码
-func MsgFmt(content string) uint8 {
-	if len(content) < 2 {
-		return 0
-	}
-	all7bits := len(content) == len([]rune(content))
-	if all7bits {
-		return 0
-	} else {
-		return 8
-	}
-}
 
 func (s *Submit) Log() []log.Field {
 	var pl = 21
@@ -395,6 +367,110 @@ func (s *Submit) Log() []log.Field {
 	}
 	csl = log.String("msgContent", hex.EncodeToString(s.msgBytes[:l])+"...")
 	return append(ls, csl)
+}
+
+func (s *Submit) MsgId() uint64 {
+	return s.msgId
+}
+
+func (s *Submit) PkTotal() uint8 {
+	return s.pkTotal
+}
+
+func (s *Submit) PkNumber() uint8 {
+	return s.pkNumber
+}
+
+func (s *Submit) RegisteredDel() uint8 {
+	return s.registeredDel
+}
+
+func (s *Submit) MsgLevel() uint8 {
+	return s.msgLevel
+}
+
+func (s *Submit) ServiceId() string {
+	return s.serviceId
+}
+
+func (s *Submit) FeeUsertype() uint8 {
+	return s.feeUsertype
+}
+
+func (s *Submit) FeeTerminalId() string {
+	return s.feeTerminalId
+}
+
+func (s *Submit) FeeTerminalType() uint8 {
+	return s.feeTerminalType
+}
+
+func (s *Submit) TpPid() uint8 {
+	return s.tpPid
+}
+
+func (s *Submit) TpUdhi() uint8 {
+	return s.tpUdhi
+}
+
+func (s *Submit) MsgFmt() uint8 {
+	return s.msgFmt
+}
+
+func (s *Submit) MsgSrc() string {
+	return s.msgSrc
+}
+
+func (s *Submit) FeeType() string {
+	return s.feeType
+}
+
+func (s *Submit) FeeCode() string {
+	return s.feeCode
+}
+
+func (s *Submit) ValidTime() string {
+	return s.validTime
+}
+
+func (s *Submit) AtTime() string {
+	return s.atTime
+}
+
+func (s *Submit) SrcId() string {
+	return s.srcId
+}
+
+func (s *Submit) DestUsrTl() uint8 {
+	return s.destUsrTl
+}
+
+func (s *Submit) DestTerminalId() string {
+	return s.destTerminalId
+}
+
+func (s *Submit) TermIds() []byte {
+	return s.termIds
+}
+
+func (s *Submit) DestTerminalType() uint8 {
+	return s.destTerminalType
+}
+
+func (s *Submit) MsgLength() uint8 {
+	return s.msgLength
+}
+
+func (s *Submit) MsgContent() string {
+	return s.msgContent
+}
+
+func (s *Submit) MsgBytes() []byte {
+	return s.msgBytes
+}
+
+func (s *Submit) LinkID() string {
+	return s.linkID
 }
 
 // 设置可选项
@@ -521,4 +597,33 @@ func bytes2StringSlice(in []byte, pl int) (ret []string) {
 		}
 	}
 	return
+}
+
+func MsgSlices(fmt uint8, content string) (slices [][]byte) {
+	var msgBytes []byte
+	// 含中文
+	if fmt == 8 {
+		msgBytes, _ = utils.Utf8ToUcs2(content)
+		slices = utils.ToTPUDHISlices(msgBytes, 140)
+	} else {
+		// 纯英文
+		msgBytes = []byte(content)
+		slices = utils.ToTPUDHISlices(msgBytes, 160)
+	}
+	return
+}
+
+// MsgFmt 通过消息内容判断，设置编码格式。
+// 如果是纯拉丁字符采用0：ASCII串
+// 如果含多字节字符，这采用8：UCS-2编码
+func MsgFmt(content string) uint8 {
+	if len(content) < 2 {
+		return 0
+	}
+	all7bits := len(content) == len([]rune(content))
+	if all7bits {
+		return 0
+	} else {
+		return 8
+	}
 }

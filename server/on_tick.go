@@ -10,26 +10,26 @@ import (
 	bs "github.com/hrygo/gosmsn/bootstrap"
 	"github.com/hrygo/gosmsn/codec"
 	"github.com/hrygo/gosmsn/codec/cmpp"
+	"github.com/hrygo/gosmsn/my_errors"
 )
 
 func (s *Server) OnTick() (delay time.Duration, action gnet.Action) {
 	msg := fmt.Sprintf("[%s] OnTick === %s", s.name, s.Address())
-	log.Info(msg, CCWW(s)...)
+	log.Info(msg, s.LogCounterWithName()...)
 
 	s.sessions.Range(func(key, value interface{}) bool {
 		session, ok := value.(*session)
 		if ok {
 			// 关闭长时间未活动的连接
 			pass := closeCheck(s, session)
-
+			// 关闭心跳未正常响应的连接
+			if pass {
+				pass = activeTestNoneResponseCheck(s, session)
+			}
 			// 发送心跳测试
 			if pass && session.stat == StatLogin {
 				activeTest(s, session)
-			}
-
-			// 关闭心跳未正常响应的连接
-			if pass {
-				activeTestNoneResponseCheck(s, session)
+				log.Info(msg, FlatMapLog(session.LogSession(), session.LogCounter())...)
 			}
 		}
 		return true
@@ -37,27 +37,29 @@ func (s *Server) OnTick() (delay time.Duration, action gnet.Action) {
 	return bs.ConfigYml.GetDuration("Server.TickDuration"), gnet.None
 }
 
-func activeTestNoneResponseCheck(s *Server, session *session) {
+func activeTestNoneResponseCheck(s *Server, session *session) bool {
 	if session.nAt > 2 {
 		msg := fmt.Sprintf("[%s] OnTick ===", s.name)
 		conn := session.Conn()
 		_ = conn.Close()
-		log.Warn(msg, JoinLog(SSR(session, conn.RemoteAddr()),
-			ConnectionClose.Field(), NoneResponseActiveTestCountThresholdReached.Field())...)
+		log.Warn(msg, FlatMapLog(session.LogSession(),
+			[]log.Field{OpConnectionClose.Field(), SErrField(my_errors.ErrorsNoneActiveTestResponse)})...)
+		return false
 	}
+	return true
 }
 
-func closeCheck(s *Server, ses *session) (pass bool) {
-	pass = true
+func closeCheck(s *Server, ses *session) bool {
 	confTime := bs.ConfigYml.GetDuration("Server.ForceCloseConnTime")
 	if ses.LastUseTime().Add(confTime).Before(time.Now()) {
 		msg := fmt.Sprintf("[%s] OnTick ===", s.name)
 		conn := ses.Conn()
 		_ = conn.Close()
-		log.Warn(msg, JoinLog(SSR(ses, conn.RemoteAddr()), ConnectionClose.Field(), NoEffectiveActionTimeThresholdReached.Field())...)
-		pass = false
+		log.Warn(msg, FlatMapLog(ses.LogSession(),
+			[]log.Field{OpConnectionClose.Field(), SErrField(fmt.Sprintf(my_errors.ErrorsNoEffectiveAction, confTime))})...)
+		return false
 	}
-	return
+	return true
 }
 
 func activeTest(s *Server, ses *session) {
@@ -84,9 +86,9 @@ func activeTest(s *Server, ses *session) {
 				return nil
 			})
 			if err == nil {
-				log.Info(msg, ses.LogSid(), ActiveTest.Field(), Packet2HexLogStr(pack))
+				log.Info(msg, FlatMapLog(ses.LogSession(), []log.Field{OpActiveTest.Field()}, active.Log())...)
 			} else {
-				log.Error(msg, ses.LogSid(), ActiveTest.Field(), ErrorField(err))
+				log.Error(msg, FlatMapLog(ses.LogSession(), []log.Field{OpActiveTest.Field(), SErrField(err.Error())})...)
 			}
 		}
 	})

@@ -1,5 +1,9 @@
 package cmpp
 
+import (
+	"github.com/hrygo/log"
+)
+
 type Version uint8
 
 const (
@@ -114,4 +118,8 @@ func (id CommandId) String() string {
 		}[id-0x80000010]
 	}
 	return "unknown"
+}
+
+func (id CommandId) Log() log.Field {
+	return log.String("op", id.String())
 }

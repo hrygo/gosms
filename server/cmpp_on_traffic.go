@@ -9,6 +9,7 @@ import (
 
 	"github.com/hrygo/gosmsn/codec"
 	"github.com/hrygo/gosmsn/codec/cmpp"
+	"github.com/hrygo/gosmsn/my_errors"
 )
 
 func cmppOnTraffic(s *Server, c gnet.Conn) (action gnet.Action) {
@@ -24,15 +25,15 @@ func cmppOnTraffic(s *Server, c gnet.Conn) (action gnet.Action) {
 	// 消息头检查
 	pkl, cmd, seq := codec.UnpackHead(buff)
 	if pkl > cmpp.PacketMax || pkl < 12 {
-		log.Error(msg, JoinLog(SSR(session, c.RemoteAddr()),
-			ErrorField(codec.NewOpError(codec.ErrTotalLengthInvalid, fmt.Sprintf("cmppOnTraffic read pack len is %d", pkl))))...)
+		log.Error(msg, FlatMapLog(session.LogSession(),
+			[]log.Field{OpConnectionClose.Field(), SErrField(fmt.Sprintf(my_errors.ErrorsIllegalPacketLength, pkl)), Packet2HexLogStr(buff)})...)
 		return gnet.Close
 	}
 
-	scmd := cmpp.CommandId(cmd).String()
-	if strings.HasSuffix(scmd, "UNKNOWN") {
-		log.Error(msg, JoinLog(SSR(session, c.RemoteAddr()),
-			ErrorField(codec.NewOpError(codec.ErrCommandIdInvalid, fmt.Sprintf("cmppOnTraffic read command is %s", scmd))))...)
+	op := cmpp.CommandId(cmd)
+	if strings.HasSuffix(op.String(), "UNKNOWN") {
+		log.Error(msg, FlatMapLog(session.LogSession(),
+			[]log.Field{SErrField(fmt.Sprintf(my_errors.ErrorsIllegalCommand, cmd))})...)
 		return gnet.Close
 	}
 
@@ -46,7 +47,7 @@ func cmppOnTraffic(s *Server, c gnet.Conn) (action gnet.Action) {
 	// 读取消息体
 	buff, _ = c.Peek(int(pkl - 12))
 	defer func() { _, _ = c.Discard(int(pkl - 12)) }()
-	log.Debug(msg, JoinLog(SSR(session, c.RemoteAddr()), Packet2HexLogStr(buff))...)
+	log.Debug(msg, FlatMapLog(session.LogSession(), []log.Field{op.Log(), Packet2HexLogStr(buff)})...)
 
 	//  这里遵循开闭原则，采用责任链实现，对拓展开放，对修改关闭
 	return ExecuteChain(handlers(), cmd, seq, buff, c, s)

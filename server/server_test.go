@@ -7,5 +7,5 @@ import (
 )
 
 func TestIota(t *testing.T) {
-	assert.True(t, FlowControl.String() == "flow_control")
+	assert.True(t, OpFlowControl.String() == "flow_control")
 }

@@ -18,9 +18,9 @@ const (
 
 	// 定义运营商常量
 
-	CMPP = "CMPP"
-	SMGP = "SMGP"
-	SGIP = "SGIP"
+	CMPP = "cmpp"
+	SMGP = "smgp"
+	SGIP = "sgip"
 )
 
 // Server 封装 gnet server
@@ -139,4 +139,22 @@ func Session(c gnet.Conn) *session {
 		return ses
 	}
 	return nil
+}
+
+func (s *Server) LogCounter() []log.Field {
+	return []log.Field{
+		log.Int(LogKeyActiveConns, s.engine.CountConnections()),
+		log.Int(LogKeyConnsThreshold, bs.ConfigYml.GetInt("Server."+s.name+".MaxConnections")),
+		log.Int(LogKeyReceiveWindowLen, len(s.window)),
+		log.Int(LogKeyReceiveWindowCap, cap(s.window)),
+	}
+}
+func (s *Server) LogCounterWithName() []log.Field {
+	return []log.Field{
+		log.String(SrvName, s.name),
+		log.Int(LogKeyActiveConns, s.engine.CountConnections()),
+		log.Int(LogKeyConnsThreshold, bs.ConfigYml.GetInt("Server."+s.name+".MaxConnections")),
+		log.Int(LogKeyReceiveWindowLen, len(s.window)),
+		log.Int(LogKeyReceiveWindowCap, cap(s.window)),
+	}
 }
