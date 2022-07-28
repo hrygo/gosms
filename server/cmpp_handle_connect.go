@@ -50,7 +50,7 @@ func handleCmppConnect(s *Server, sc *session, login *cmpp.Connect) {
 	// 检查当前已登录会话数是否已达上限
 	if code == cmpp.ConnStatusOK {
 		// 注意这里仅按照单节点计算某个client的session数，实际上应该计算集群中的某个client的session数。
-		// 要支持集群，连接会话的计数，应该采用数据库或者redis等存储。
+		// TODO 要支持集群，连接会话的计数，应该采用数据库或者redis等存储。
 		activeSession := s.CountSessionByClientId(cli.ClientId)
 		if activeSession >= cli.MaxConns {
 			code = cmpp.ConnStatusOthers

@@ -14,10 +14,10 @@ const (
 	LogKeyErr             = "error"  // 错误信息
 	LogKeyPacket          = "packet" // 数据包
 	_                     = "【全 局】计数器"
-	LogKeyPoolFree        = "g_session_pool_free" // 【全局】goroutine goPool 当前会话池剩余量
-	LogKeyPoolCap         = "g_session_pool_cap"  // 【全局】goroutine goPool 会话池最大容量
+	LogKeyPoolFree        = "g_session_pool_free" // 【全局】当前会话池剩余量
+	LogKeyPoolCap         = "g_session_pool_cap"  // 【全局】会话池最大容量
 	_                     = "【会话级】计数器"
-	LogKeyClientConnsCap  = "c_conns_cap" // 【会话级】该连接对应的客户端能建立的最大连接数
+	LogKeyClientConnsCap  = "c_conns_cap" // 【会话级】该连接对应的客户端能建立的最大连接数（待采用redis或数据库存储实时会话数，以实现整个集群的连接数可控）
 	LogKeySessionSwCur    = "s_sw_cur"    // 【会话级】接收消息滑动窗口当前大小
 	LogKeySessionSwCap    = "s_sw_cap"    // 【会话级】接收消息滑动窗口最大值
 	LogKeySessionPoolFree = "s_pool_free" // 【会话级】goroutine goPool 当前使用数

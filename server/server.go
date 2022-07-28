@@ -65,7 +65,7 @@ func New(name string) *Server {
 			log.Errorf("%v", e)
 		},
 	}
-	// 因为该pool目前仅用于处理登录请求，不需过大，设置未与CPU核心数相同。
+	// 因为该pool目前仅用于处理登录请求，不需过大，设置与CPU核心数相同。
 	var pool, _ = ants.NewPool(runtime.NumCPU(), ants.WithOptions(options))
 	return &Server{
 		name:           name,
