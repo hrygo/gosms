@@ -1,4 +1,4 @@
-AppDebug: false   # 设置程序所处的模式，debug=true 调试模式，日志优先显示在控制台，debug=false 非调试模式，将写入日志文件
+AppDebug: true   # 设置程序所处的模式，debug=true 调试模式，日志优先显示在控制台，debug=false 非调试模式，将写入日志文件
 
 Server:
   TickDuration: 10s           #定时器执行间隔

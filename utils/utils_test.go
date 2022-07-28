@@ -53,7 +53,7 @@ func TestUtf8ToUcs2(t *testing.T) {
 func TestUcs2ToUtf8(t *testing.T) {
 	u1 := []byte{0x6c, 0x49}
 
-	s1, err := utils.Ucs2ToUtf8(string(u1))
+	s1, err := utils.Ucs2ToUtf8(u1)
 	if err != nil {
 		t.Fatalf("The error is %#v, not to the result expected: nil", err)
 	}
