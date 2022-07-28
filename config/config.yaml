@@ -1,4 +1,4 @@
-AppDebug: true   # 设置程序所处的模式，debug=true 调试模式，日志优先显示在控制台，debug=false 非调试模式，将写入日志文件
+AppDebug: false   # 设置程序所处的模式，debug=true 调试模式，日志优先显示在控制台，debug=false 非调试模式，将写入日志文件
 
 Server:
   TickDuration: 10s           #定时器执行间隔
@@ -22,7 +22,13 @@ Server:
     ReceiveWindowSize: 1000
     MaxConnections: 10
   Pprof: #pprof debug 定义
+    Enable: true
     Port: 10088
+  Mock: #模拟器参数
+    SuccessRate: 0.96      # 成功率，非成功的返回状态码非0
+    MinSubmitRespMs: 1     # Mt响应的最小时间
+    MaxSubmitRespMs: 3     # Mt响应的最大时间
+    FixReportRespMs: 5     # 状态报告在fix-report-resp-ms后发送
 
 Client:
   StoreType: "yaml"               # 通过yaml文件来存储客户端配置信息，还支持mysql,postgresql等（计划）
@@ -40,7 +46,8 @@ Snowflake: # 类雪花算法序号生成器配置
 
 Logs:
   Default: # 默认的全部日志
-    LogName: "logs/gosms.log_utils"
+    LogName: "logs/gosms.log"
+    Level: 0                              #debug=-1, info=0, warn=1, error=2, panic=3,4, fatal=5
     TextFormat: "json"                    #记录日志的格式，参数选项：console、json, console 表示一般的文本格式
     TimePrecision: "millisecond"          #记录日志时，相关的时间精度，该参数选项：second、millisecond ，分别表示 秒 和 毫秒 ,默认为毫秒级别
     MaxSize: 10                           #每个日志的最大尺寸(以MB为单位），超过该值，系统将会自动进行切割
@@ -48,7 +55,8 @@ Logs:
     MaxAge: 30                            #保留旧日志最大天数
     Compress: false                       #日志备份时，是否进行压缩
   Error: # 仅Warn以上级别日志
-    LogName: "logs/error.log_utils"
+    Level: 1
+    LogName: "logs/error.log"
     TextFormat: "console"
     TimePrecision: "millisecond"
     MaxSize: 1
@@ -56,10 +64,12 @@ Logs:
     MaxAge: 15
     Compress: false
   Test: # 测试自定义日志, 通过 my_log.New 创建
-    LogName: "logs/test.log_utils"
+    Level: 0
+    LogName: "logs/test.log"
     TextFormat: "console"
     TimePrecision: "millisecond"
     MaxSize: 1
     MaxBackups: 7
     MaxAge: 15
     Compress: false
+

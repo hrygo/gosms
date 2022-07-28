@@ -143,18 +143,17 @@ func Session(c gnet.Conn) *session {
 
 func (s *Server) LogCounter() []log.Field {
 	return []log.Field{
-		log.Int(LogKeyActiveConns, s.engine.CountConnections()),
-		log.Int(LogKeyConnsThreshold, bs.ConfigYml.GetInt("Server."+s.name+".MaxConnections")),
-		log.Int(LogKeyReceiveWindowLen, len(s.window)),
-		log.Int(LogKeyReceiveWindowCap, cap(s.window)),
+		log.Int(LogKeyConnsCurrent, s.engine.CountConnections()),
+		log.Int(LogKeyConnsCap, bs.ConfigYml.GetInt("Server."+s.name+".MaxConnections")),
+		log.Int(LogKeySwCur, len(s.window)),
+		log.Int(LogKeySwCap, cap(s.window)),
+		log.Int(LogKeyPoolFree, s.pool.Free()),
+		log.Int(LogKeyPoolCap, s.pool.Cap()),
 	}
 }
 func (s *Server) LogCounterWithName() []log.Field {
-	return []log.Field{
-		log.String(SrvName, s.name),
-		log.Int(LogKeyActiveConns, s.engine.CountConnections()),
-		log.Int(LogKeyConnsThreshold, bs.ConfigYml.GetInt("Server."+s.name+".MaxConnections")),
-		log.Int(LogKeyReceiveWindowLen, len(s.window)),
-		log.Int(LogKeyReceiveWindowCap, cap(s.window)),
-	}
+	fields := s.LogCounter()
+	ret := make([]log.Field, 0, len(fields)+1)
+	ret = append(ret, log.String(SrvName, s.name))
+	return append(ret, fields...)
 }

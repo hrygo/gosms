@@ -59,7 +59,7 @@ func handleCmppConnect(s *Server, sc *session, login *cmpp.Connect) {
 			sc.lastUseTime = time.Now()
 			sc.closePoolChan()
 			sc.window = make(chan struct{}, cli.MtWindowSize)
-			sc.pool = createSessionSidePool(cli.MtWindowSize)
+			sc.pool = createSessionSidePool(cli.MtWindowSize * 2)
 			s.Conns().Store(sc.id, sc)
 		} else {
 			// 客户端登录失败，关闭连接

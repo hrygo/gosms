@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"strconv"
 	"strings"
 	"time"
@@ -148,4 +149,13 @@ func ToTPUDHISlices(content []byte, pkgLen int) (rt [][]byte) {
 		rt = append(rt, part)
 	}
 	return rt
+}
+
+func RandNum(min, max int32) int {
+	return rand.Intn(int(max-min)) + int(min)
+}
+
+// DiceCheck 投概率骰子，得到结果比给定数字大则返回true，否则返回false
+func DiceCheck(prob float64) bool {
+	return float64(rand.Intn(10000))/10000.0 > prob
 }

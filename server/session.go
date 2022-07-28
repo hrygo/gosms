@@ -9,6 +9,7 @@ import (
 	"github.com/panjf2000/gnet/v2"
 	"github.com/panjf2000/gnet/v2/pkg/pool/goroutine"
 
+	"github.com/hrygo/gosmsn/client"
 	"github.com/hrygo/gosmsn/codec"
 )
 
@@ -16,15 +17,15 @@ import (
 type session struct {
 	sync.Mutex
 	id          uint64
-	conn        gnet.Conn
-	clientId    string    // 客户端识别号，由服务端分配
-	serverName  string    // 连接的Server的name
-	ver         byte      // 协议版本号
-	stat        stat      // 会话状态
-	nAt         byte      // 未接收到响应的心跳次数
-	lastUseTime time.Time // 接收到客户端的 active/active_resp 或 mt 消息会更新该时间
-	counter               // mt, dly, report 计数器
 	createTime  time.Time
+	conn        gnet.Conn
+	clientId    string          // 客户端识别号，由服务端分配
+	serverName  string          // 连接的Server的name
+	ver         byte            // 协议版本号
+	stat        stat            // 会话状态
+	nAt         byte            // 未接收到响应的心跳次数
+	lastUseTime time.Time       // 接收到客户端的 active/active_resp 或 mt 消息会更新该时间
+	counter                     // mt, dly, report 计数器
 	window      chan struct{}   // 流控所需通道，登录成功后需设置此值，否则消息不能正常收发
 	pool        *goroutine.Pool // 会话级别的线程池，登录成功后需设置此值，否则消息不能正常收发
 }
@@ -126,15 +127,15 @@ func (s *session) LastUseTime() time.Time {
 	return s.lastUseTime
 }
 
-func (s *session) LogSession(cap ...int) []log.Field {
+func (s *session) LogSession(size ...int) []log.Field {
 	if s == nil {
 		return nil
 	}
 	var ret []log.Field
-	if len(cap) == 0 {
+	if len(size) == 0 {
 		ret = make([]log.Field, 0, 8)
-	} else if cap[0] > 8 {
-		ret = make([]log.Field, 0, cap[0])
+	} else if size[0] > 8 {
+		ret = make([]log.Field, 0, size[0])
 	}
 	return append(ret,
 		log.String(SrvName, s.serverName),
@@ -142,12 +143,21 @@ func (s *session) LogSession(cap ...int) []log.Field {
 		log.String(RemoteAddr, s.conn.RemoteAddr().String()))
 }
 
-func (s *session) LogCounter(cap ...int) []log.Field {
+func (s *session) LogCounter() []log.Field {
 	var mt, dlv, rpt uint64 = 0, 0, 0
 	if s != nil {
 		mt, dlv, rpt = s.counter.mt, s.counter.dly, s.counter.report
 	}
+	cli := client.Cache.FindByCid(s.serverName, s.clientId)
+	if cli == nil {
+		cli = &client.Client{}
+	}
 	return []log.Field{
+		log.Int(LogKeySessionConnsCap, cli.MaxConns),
+		log.Int(LogKeySessionPoolFree, s.pool.Free()),
+		log.Int(LogKeySessionPoolCap, s.pool.Cap()),
+		log.Int(LogKeySessionSwCur, len(s.window)),
+		log.Int(LogKeySessionSwCap, cap(s.window)),
 		log.Uint64(LogKeyCounterMt, mt),
 		log.Uint64(LogKeyCounterDlv, dlv),
 		log.Uint64(LogKeyCounterRpt, rpt),
@@ -156,4 +166,22 @@ func (s *session) LogCounter(cap ...int) []log.Field {
 
 func (s *session) ServerName() string {
 	return s.serverName
+}
+
+func (s *session) CounterAddMt() {
+	s.Lock()
+	defer s.Unlock()
+	s.mt += 1
+}
+
+func (s *session) CounterAddDly() {
+	s.Lock()
+	defer s.Unlock()
+	s.dly += 1
+}
+
+func (s *session) CounterAddRpt() {
+	s.Lock()
+	defer s.Unlock()
+	s.report += 1
 }

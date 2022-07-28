@@ -3,13 +3,16 @@ package server
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/hrygo/log"
 	"github.com/panjf2000/gnet/v2"
 
+	"github.com/hrygo/gosmsn/bootstrap"
 	"github.com/hrygo/gosmsn/codec"
 	"github.com/hrygo/gosmsn/codec/cmpp"
 	"github.com/hrygo/gosmsn/my_errors"
+	"github.com/hrygo/gosmsn/utils"
 )
 
 func cmppOnTraffic(s *Server, c gnet.Conn) (action gnet.Action) {
@@ -58,4 +61,11 @@ func handlers() []TrafficHandler {
 		cmppConnect,
 		cmppSubmit,
 	}
+}
+
+func mockRandPrecessTime() {
+	min := bootstrap.ConfigYml.GetInt("Server.Mock.MinSubmitRespMs")
+	max := bootstrap.ConfigYml.GetInt("Server.Mock.MaxSubmitRespMs")
+	rt := time.Duration(utils.RandNum(int32(min), int32(max)))
+	time.Sleep(rt * time.Millisecond)
 }

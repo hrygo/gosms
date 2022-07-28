@@ -93,7 +93,7 @@ func logInit() {
 				Compress:   ConfigYml.GetBool("Logs.Default.Compress"),
 			},
 			LvlEnableFunc: func(lvl log.Level) bool {
-				return lvl <= log.FatalLevel && lvl >= log.DebugLevel
+				return lvl >= log.Level(ConfigYml.GetInt("Logs.Default.Level"))
 			},
 		},
 		{
@@ -107,7 +107,7 @@ func logInit() {
 				Compress:   ConfigYml.GetBool("Logs.Error.Compress"),
 			},
 			LvlEnableFunc: func(lvl log.Level) bool {
-				return lvl >= log.WarnLevel
+				return lvl >= log.Level(ConfigYml.GetInt("Logs.Error.Level"))
 			},
 		},
 	}

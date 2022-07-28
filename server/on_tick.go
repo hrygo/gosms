@@ -86,9 +86,9 @@ func activeTest(s *Server, ses *session) {
 				return nil
 			})
 			if err == nil {
-				log.Info(msg, FlatMapLog(ses.LogSession(), []log.Field{OpActiveTest.Field()}, active.Log())...)
+				log.Info(msg, FlatMapLog(ses.LogSession(), active.Log())...)
 			} else {
-				log.Error(msg, FlatMapLog(ses.LogSession(), []log.Field{OpActiveTest.Field(), SErrField(err.Error())})...)
+				log.Error(msg, FlatMapLog(ses.LogSession(), []log.Field{cmpp.CMPP_ACTIVE_TEST.Log(), SErrField(err.Error())})...)
 			}
 		}
 	})

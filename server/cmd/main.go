@@ -50,7 +50,7 @@ func savePid(pf string) string {
 
 // 开启pprof，监听请求
 func pprofDebug() {
-	if bs.ConfigYml.GetBool("AppDebug") {
+	if bs.ConfigYml.GetBool("Server.Pprof.Enable") {
 		go func() {
 			var pprof = bs.ConfigYml.GetInt("Server.Pprof.Port")
 			log.Warnf("debug pprof on http://localhost:%d/debug/pprof/", pprof)
