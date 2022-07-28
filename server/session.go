@@ -43,14 +43,13 @@ const (
 	StatClosing
 )
 
-func createSession(c gnet.Conn) *session {
+func NewSession(c gnet.Conn) *session {
 	se := &session{}
 	se.id = uint64(codec.B64Seq.NextVal())
 	se.stat = StatConnect
 	se.conn = c
 	se.createTime = time.Now()
 	se.lastUseTime = time.Now()
-	se.pool = createSessionSidePool(1) // 设置一个大小为1的默认pool
 	return se
 }
 
@@ -137,10 +136,19 @@ func (s *session) LogSession(size ...int) []log.Field {
 	} else if size[0] > 8 {
 		ret = make([]log.Field, 0, size[0])
 	}
+	cliName := s.clientId
+	if cliName == "" {
+		cliName = "not login"
+	}
+	remote := "closed"
+	if s.conn != nil {
+		remote = s.conn.RemoteAddr().String()
+	}
 	return append(ret,
 		log.String(SrvName, s.serverName),
+		log.String(CliName, cliName),
 		log.Uint64(Sid, s.Id()),
-		log.String(RemoteAddr, s.conn.RemoteAddr().String()))
+		log.String(RemoteAddr, remote))
 }
 
 func (s *session) LogCounter() []log.Field {
@@ -152,10 +160,19 @@ func (s *session) LogCounter() []log.Field {
 	if cli == nil {
 		cli = &client.Client{}
 	}
+
+	// 防止未登录而未初始化pool时的空指针异常。
+	free := 0
+	pcap := 0
+	if s.pool != nil {
+		free = s.pool.Free()
+		pcap = s.pool.Cap()
+	}
+
 	return []log.Field{
-		log.Int(LogKeySessionConnsCap, cli.MaxConns),
-		log.Int(LogKeySessionPoolFree, s.pool.Free()),
-		log.Int(LogKeySessionPoolCap, s.pool.Cap()),
+		log.Int(LogKeyClientConnsCap, cli.MaxConns),
+		log.Int(LogKeySessionPoolFree, free),
+		log.Int(LogKeySessionPoolCap, pcap),
 		log.Int(LogKeySessionSwCur, len(s.window)),
 		log.Int(LogKeySessionSwCap, cap(s.window)),
 		log.Uint64(LogKeyCounterMt, mt),
@@ -172,16 +189,19 @@ func (s *session) CounterAddMt() {
 	s.Lock()
 	defer s.Unlock()
 	s.mt += 1
+	s.lastUseTime = time.Now()
 }
 
 func (s *session) CounterAddDly() {
 	s.Lock()
 	defer s.Unlock()
 	s.dly += 1
+	s.lastUseTime = time.Now()
 }
 
 func (s *session) CounterAddRpt() {
 	s.Lock()
 	defer s.Unlock()
 	s.report += 1
+	s.lastUseTime = time.Now()
 }

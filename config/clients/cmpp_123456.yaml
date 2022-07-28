@@ -11,6 +11,6 @@ fee-terminal-id:                  # 费用相关
 fee-type: 05                      # 费用相关
 fee-code: free                    # 费用相关
 link-id:                          # 点播业务相关
-max-conns: 2                      # 最大连接数
-mt-window-size: 32                # 接收窗口大小,服务端分配
+max-conns: 4                      # 最大连接数
+mt-window-size: 16                # 接收窗口大小,服务端分配
 mt-valid-duration: 2h             # 短信默认有效期，超过下面配置时长后，如果消息未发送，则不再发送

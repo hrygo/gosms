@@ -20,31 +20,33 @@ var cmppSubmit TrafficHandler = func(cmd, seq uint32, buff []byte, c gnet.Conn, 
 		return true, gnet.None
 	}
 
-	ses := Session(c)
-	if !sessionCheck(ses) {
+	sc := Session(c)
+	if !sessionCheck(sc) {
 		return false, gnet.Close
 	}
 
-	var mt = &cmpp.Submit{Version: cmpp.Version(ses.ver)}
+	var mt = &cmpp.Submit{Version: cmpp.Version(sc.ver)}
 	err := mt.Decode(seq, buff)
 	if err != nil {
-		decodeErrorLog(ses, buff)
+		decodeErrorLog(sc, buff)
 		return false, gnet.Close
 	}
-	// 异步处理登录逻辑，避免阻塞 event-loop
-	// 使用会话级别的 Pool, 这样不同会话之间的资源相对独立
-	_ = ses.Pool().Submit(func() {
-		handleCmppSubmit(s, ses, mt)
+	// 异步处理，避免阻塞 event-loop
+	// 使用会话级别的 GoPool, 这样不同会话之间的资源相对独立
+	err = sc.Pool().Submit(func() {
+		handleCmppSubmit(s, sc, mt)
 	})
+	if err != nil {
+		log.Error(fmt.Sprintf("[%s] OnTraffic %s", sc.ServerName(), RC),
+			FlatMapLog(sc.LogSession(), []log.Field{OpDropMessage.Field(), ErrorField(err), Packet2HexLogStr(buff)})...)
+		return false, gnet.Close
+	}
 
 	return false, gnet.None
 }
 
 func handleCmppSubmit(s *Server, sc *session, mt *cmpp.Submit) {
-	// 【全局流控】采用通道控制消息收发速度,向通道发送信号
-	s.window <- struct{}{}
-	defer func() { <-s.window }()
-	// 【会话级别流控】采用通道控制消息收发速度,向通道发送信号
+	// 【会话级别流控】采用通道控制消息收发窗口,向通道发送信号
 	sc.window <- struct{}{}
 	defer func() { <-sc.window }()
 
@@ -70,6 +72,7 @@ func handleCmppSubmit(s *Server, sc *session, mt *cmpp.Submit) {
 	pack := resp.Encode()
 	// 异步非阻塞
 	err = sc.conn.AsyncWrite(pack, func(c gnet.Conn) error {
+		_ = c.Flush()
 		// 更新mt计数器
 		sc.CounterAddMt()
 		msg = fmt.Sprintf("[%s] OnTraffic %s", s.name, SD)
@@ -96,7 +99,8 @@ func cmppSubmitPacketCheck(s *session, mt *cmpp.Submit) (result uint32, err erro
 	if check {
 		check = mt.MsgLevel() < 10
 	}
-	// TODO more check
+	// do more check
+	// ...
 	return 0, nil
 }
 
@@ -115,6 +119,7 @@ func mockSendCmppReport(sc *session, sub *cmpp.Submit, msgId uint64) {
 	}
 	// 发送状态报告
 	err := sc.conn.AsyncWrite(dly.Encode(), func(c gnet.Conn) error {
+		_ = c.Flush()
 		log.Debug(msg, FlatMapLog(sc.LogSession(32), dly.Log())...)
 		sc.CounterAddRpt()
 		return nil

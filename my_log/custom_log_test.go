@@ -11,7 +11,7 @@ import (
 )
 
 func TestNew(t *testing.T) {
-	cLog := New("test", log.DebugLevel,
+	cLog := New("test",
 		log.WithCaller(true),
 		log.AddStacktrace(log.ErrorLevel),
 		zap.Hooks(printCallerHook),

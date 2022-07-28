@@ -60,6 +60,7 @@ func handlers() []TrafficHandler {
 	return []TrafficHandler{
 		cmppConnect,
 		cmppSubmit,
+		cmppActive,
 	}
 }
 

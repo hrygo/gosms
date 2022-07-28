@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"runtime"
 	"sync"
 	"time"
 
@@ -27,19 +28,20 @@ const (
 type Server struct {
 	sync.Mutex
 	gnet.BuiltinEventEngine
-	engine    gnet.Engine
-	protocol  string
-	port      int
-	multicore bool
-	pool      *goroutine.Pool
-	sessions  sync.Map
-	window    chan struct{}
-	name      string
+	engine         gnet.Engine
+	name           string
+	protocol       string
+	port           int
+	multicore      bool
+	goPool         *goroutine.Pool // 处理登录请求的Pool
+	sessionPool    sync.Map        // 存储会话的map（GoPool）
+	sessionPoolCap int             // 存储会话的map的最大容量
+	activeSessions int             // 已存储的会话数，活跃会话数
 }
 
 func Start(s *Server) {
 	go func() {
-		defer s.pool.Release()
+		defer s.goPool.Release()
 		addr := fmt.Sprintf("%s://:%d", s.protocol, s.port)
 		err := gnet.Run(
 			s,
@@ -54,40 +56,42 @@ func Start(s *Server) {
 func New(name string) *Server {
 	var port = bs.ConfigYml.GetInt("Server." + name + ".Port")
 	var multicore = bs.ConfigYml.GetBool("Server." + name + ".Multicore")
-	var maxPoolSize = bs.ConfigYml.GetInt("Server." + name + ".MaxPoolSize")
-	var receiveWindowSize = bs.ConfigYml.GetInt("Server." + name + ".ReceiveWindowSize")
+	var MaxSessions = bs.ConfigYml.GetInt("Server." + name + ".MaxSessions")
 	var options = ants.Options{
-		ExpiryDuration:   time.Minute, // 1 分钟内不被使用的worker会被清除
-		Nonblocking:      false,       // 如果为true,worker池满了后提交任务会直接返回nil
-		MaxBlockingTasks: maxPoolSize, // blocking模式有效，否则worker池满了后提交任务会直接返回nil
-		PreAlloc:         false,
+		ExpiryDuration: time.Minute, // 1 分钟内不被使用的worker会被清除
+		Nonblocking:    true,        // 如果为true, worker池满了后提交任务会直接返回nil，如果为false需设置MaxBlockingTasks参数为非0值
+		PreAlloc:       false,
 		PanicHandler: func(e interface{}) {
 			log.Errorf("%v", e)
 		},
 	}
-	var pool, _ = ants.NewPool(maxPoolSize, ants.WithOptions(options))
+	// 因为该pool目前仅用于处理登录请求，不需过大，设置未与CPU核心数相同。
+	var pool, _ = ants.NewPool(runtime.NumCPU(), ants.WithOptions(options))
 	return &Server{
-		protocol:  protocol,
-		port:      port,
-		multicore: multicore,
-		pool:      pool,
-		window:    make(chan struct{}, receiveWindowSize), // 用通道控制消息接收窗口
-		name:      name,
+		name:           name,
+		protocol:       protocol,
+		port:           port,
+		multicore:      multicore,
+		goPool:         pool,
+		sessionPoolCap: MaxSessions,
 	}
 }
 
-func (s *Server) SaveSession(c gnet.Conn) *session {
-	ses := createSession(c)
-	ses.serverName = s.name
-	c.SetContext(ses)
-	s.sessions.Store(ses.id, ses)
-	return ses
-}
-
-func (s *Server) CountConnsByClientId(clientId string) (counter uint32) {
+func (s *Server) CreateSession(c gnet.Conn) *session {
 	s.Lock()
 	defer s.Unlock()
-	s.sessions.Range(func(key, value any) bool {
+	sc := NewSession(c)
+	sc.serverName = s.name
+	c.SetContext(sc)
+	s.sessionPool.Store(sc.id, sc)
+	s.activeSessions += 1
+	return sc
+}
+
+func (s *Server) CountSessionByClientId(clientId string) (counter int) {
+	s.Lock()
+	defer s.Unlock()
+	s.sessionPool.Range(func(key, value any) bool {
 		s, ok := value.(*session)
 		if ok && s.clientId == clientId {
 			counter += 1
@@ -95,6 +99,10 @@ func (s *Server) CountConnsByClientId(clientId string) (counter uint32) {
 		return true
 	})
 	return
+}
+
+func (s *Server) ActiveSessions() int {
+	return s.activeSessions
 }
 
 func (s *Server) Engine() gnet.Engine {
@@ -109,20 +117,20 @@ func (s *Server) Port() int {
 	return s.port
 }
 
-func (s *Server) Pool() *goroutine.Pool {
-	return s.pool
+func (s *Server) GoPool() *goroutine.Pool {
+	return s.goPool
 }
 
-func (s *Server) Conns() *sync.Map {
-	return &s.sessions
-}
-
-func (s *Server) Window() chan struct{} {
-	return s.window
+func (s *Server) SessionPool() *sync.Map {
+	return &s.sessionPool
 }
 
 func (s *Server) Name() string {
 	return s.name
+}
+
+func (s *Server) SessionPoolCap() int {
+	return s.sessionPoolCap
 }
 
 func (s *Server) Address() string {
@@ -143,12 +151,8 @@ func Session(c gnet.Conn) *session {
 
 func (s *Server) LogCounter() []log.Field {
 	return []log.Field{
-		log.Int(LogKeyConnsCurrent, s.engine.CountConnections()),
-		log.Int(LogKeyConnsCap, bs.ConfigYml.GetInt("Server."+s.name+".MaxConnections")),
-		log.Int(LogKeySwCur, len(s.window)),
-		log.Int(LogKeySwCap, cap(s.window)),
-		log.Int(LogKeyPoolFree, s.pool.Free()),
-		log.Int(LogKeyPoolCap, s.pool.Cap()),
+		log.Int(LogKeyPoolFree, s.SessionPoolCap()-s.ActiveSessions()),
+		log.Int(LogKeyPoolCap, s.SessionPoolCap()),
 	}
 }
 func (s *Server) LogCounterWithName() []log.Field {

@@ -88,8 +88,8 @@ func logInit() {
 			TimePrecision: ConfigYml.GetString("Logs.Default.TimePrecision"),
 			Ropt: log.RotateOptions{
 				MaxSize:    ConfigYml.GetInt("Logs.Default.MaxSize"),
-				MaxAge:     ConfigYml.GetInt("Logs.Default.MaxBackups"),
-				MaxBackups: ConfigYml.GetInt("Logs.Default.MaxAge"),
+				MaxAge:     ConfigYml.GetInt("Logs.Default.MaxAge"),
+				MaxBackups: ConfigYml.GetInt("Logs.Default.MaxBackups"),
 				Compress:   ConfigYml.GetBool("Logs.Default.Compress"),
 			},
 			LvlEnableFunc: func(lvl log.Level) bool {
@@ -102,8 +102,8 @@ func logInit() {
 			TimePrecision: ConfigYml.GetString("Logs.Error.TimePrecision"),
 			Ropt: log.RotateOptions{
 				MaxSize:    ConfigYml.GetInt("Logs.Error.MaxSize"),
-				MaxAge:     ConfigYml.GetInt("Logs.Error.MaxBackups"),
-				MaxBackups: ConfigYml.GetInt("Logs.Error.MaxAge"),
+				MaxAge:     ConfigYml.GetInt("Logs.Error.MaxAge"),
+				MaxBackups: ConfigYml.GetInt("Logs.Error.MaxBackups"),
 				Compress:   ConfigYml.GetBool("Logs.Error.Compress"),
 			},
 			LvlEnableFunc: func(lvl log.Level) bool {

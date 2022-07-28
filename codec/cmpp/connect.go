@@ -82,8 +82,8 @@ func (c *Connect) Decode(seq uint32, frame []byte) error {
 func (c *Connect) Log() []log.Field {
 	ls := c.MessageHeader.Log()
 	ls = append(ls,
-		log.String("clientId", c.sourceAddr),
-		log.String("md5", hex.EncodeToString(c.authenticatorSource)),
+		log.String("sourceAddr", c.sourceAddr),
+		log.String("authenticatorSource", hex.EncodeToString(c.authenticatorSource)),
 		log.Uint8("version", uint8(c.version)),
 		log.String("timestamp", fmt.Sprintf("%010d", c.timestamp)))
 	return ls
@@ -141,20 +141,22 @@ func (c *Connect) ToResponse(code uint32) codec.Pdu {
 	rsp.SequenceId = c.SequenceId
 	rsp.status = ConnStatus(code)
 
-	// authenticatorISMG =MD5 ( status+authenticatorSource+shar ed secret)
 	var bs []byte
 	if V30.MajorMatchV(c.version) {
 		bs = []byte{0, 0, 0, byte(rsp.status)}
 	} else {
 		bs = []byte{byte(rsp.status)}
 	}
-
-	md5Auth := md5.Sum(bytes.Join([][]byte{
-		bs,
-		[]byte(c.sourceAddr),
-		[]byte(c.secret),
-	}, nil))
-	rsp.authenticatorISMG = md5Auth[:]
+	if rsp.status == ConnStatusOK {
+		md5Auth := md5.Sum(bytes.Join([][]byte{
+			bs,
+			[]byte(c.sourceAddr),
+			[]byte(c.secret),
+		}, nil))
+		rsp.authenticatorISMG = md5Auth[:]
+	} else {
+		rsp.authenticatorISMG = make([]byte, 16, 16)
+	}
 	rsp.version = c.version
 	return rsp
 }
@@ -213,7 +215,7 @@ func (r *ConnectResp) Log() []log.Field {
 	ls := r.MessageHeader.Log()
 	ls = append(ls,
 		log.Uint8("status", uint8(r.status)),
-		log.String("md5", hex.EncodeToString(r.authenticatorISMG)),
+		log.String("authenticatorISMG", hex.EncodeToString(r.authenticatorISMG)),
 		log.Uint8("version", uint8(r.version)))
 	return ls
 }
@@ -236,6 +238,6 @@ func (i ConnStatus) String() string {
 		"非法源地址",
 		"认证错",
 		"版本太高",
-		"其他错误",
+		"其他错误：连接数过多等",
 	}[i]
 }

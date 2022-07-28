@@ -248,7 +248,7 @@ type SubmitResp struct {
 }
 
 func (s *Submit) ToResponse(result uint32) codec.Pdu {
-	resp := &SubmitResp{}
+	resp := &SubmitResp{Version: s.Version}
 	resp.TotalLength = HeadLen + 9
 	resp.CommandId = CMPP_SUBMIT_RESP
 	resp.SequenceId = s.SequenceId
@@ -260,12 +260,11 @@ func (s *Submit) ToResponse(result uint32) codec.Pdu {
 	}
 	resp.result = MtResult(result)
 
-	resp.Version = s.Version
 	return resp
 }
 
 func (s *Submit) ToDeliveryReport(msgId uint64) *Delivery {
-	d := Delivery{}
+	d := Delivery{Version: s.Version}
 	d.TotalLength = 145
 	if V30.MajorMatchV(s.Version) {
 		d.TotalLength = 169
@@ -273,6 +272,7 @@ func (s *Submit) ToDeliveryReport(msgId uint64) *Delivery {
 	d.CommandId = CMPP_DELIVER
 	d.SequenceId = uint32(codec.B32Seq.NextVal())
 
+	d.msgId = uint64(codec.B64Seq.NextVal())
 	d.registeredDelivery = 1
 	d.msgLength = 60
 	d.destId = s.srcId
@@ -284,7 +284,6 @@ func (s *Submit) ToDeliveryReport(msgId uint64) *Delivery {
 	doneTime := time.Now().Add(10 * time.Second).Format("0601021504")
 	report := NewReport(msgId, s.destTerminalId, subTime, doneTime)
 	d.report = report
-
 	return &d
 }
 

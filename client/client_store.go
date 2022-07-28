@@ -118,7 +118,8 @@ func unmarshal(data []byte, id string, y *YamlStore) {
 	cli := &Client{}
 	err := yaml.Unmarshal(data, cli)
 	if err != nil {
-		log.Fatalf("Config file init error: %v", err)
+		log.Errorf("Config file init error: %v", err)
+	} else {
+		y.cache[id] = cli
 	}
-	y.cache[id] = cli
 }

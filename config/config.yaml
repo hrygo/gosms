@@ -6,21 +6,15 @@ Server:
   CMPP: #移动网关配置信息
     Port: 10086               #CMPP服务 端口
     Multicore: true           #CMPP服务 是否开启多核
-    MaxPoolSize: 32           #CMPP服务 服务自身的线程池，主要消息的收发不采用此线程池，不需设置过大
-    ReceiveWindowSize: 1000   #CMPP服务 服务总体接收窗口大小
-    MaxConnections: 10        #CMPP服务 服务总体最大连接数
+    MaxSessions: 32            #CMPP服务 服务可承载最大会话数（已）
   SGIP: #联通网关配置信息
     Port: 10010
     Multicore: true
-    MaxPoolSize: 32
-    ReceiveWindowSize: 1000
-    MaxConnections: 10
+    MaxSessions: 32
   SMGP: #电信网关配置信息
     Port: 10000
     Multicore: true
-    MaxPoolSize: 32
-    ReceiveWindowSize: 1000
-    MaxConnections: 10
+    MaxSessions: 32
   Pprof: #pprof debug 定义
     Enable: true
     Port: 10088
@@ -63,13 +57,13 @@ Logs:
     MaxBackups: 7
     MaxAge: 15
     Compress: false
-  Test: # 测试自定义日志, 通过 my_log.New 创建
-    Level: 0
-    LogName: "logs/test.log"
-    TextFormat: "console"
+  CounterDB: # 存储消息计数数据（模拟数据库）
+    Level: -1
+    LogName: "logs/counter/saved.db"
+    TextFormat: "json"
     TimePrecision: "millisecond"
     MaxSize: 1
-    MaxBackups: 7
-    MaxAge: 15
+    MaxBackups: 10240
+    MaxAge: 10240
     Compress: false
 
