@@ -24,4 +24,6 @@
 
 # Others
 logs
-_.pid
+*.pid
+gosmsn
+

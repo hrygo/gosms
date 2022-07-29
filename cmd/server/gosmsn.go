@@ -17,7 +17,7 @@ import (
 
 func main() {
 	rand.Seed(time.Now().Unix()) // 随机种子
-	log.Infof("current pid is %s.", savePid("_.pid"))
+	log.Infof("current pid is %s.", savePid(".gosmsn.pid"))
 	pprofDebug()
 
 	server.Start(server.New(server.CMPP))

@@ -98,7 +98,7 @@ func smgpSubmitPacketCheck(s *session, mt *smgp.Submit) (result uint32, err erro
 	cli := client.Cache.FindByCid(s.serverName, s.clientId)
 	check := strings.HasPrefix(mt.SrcTermID(), cli.SmsDisplayNo)
 	if check {
-		check = mt.Priority() < 10
+		check = mt.Priority() < 4
 	}
 	// do more check
 	// ...

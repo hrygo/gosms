@@ -65,7 +65,7 @@ Logs:
     Compress: false
   CounterDB: # 存储消息计数数据（模拟数据库）
     Level: -1
-    LogName: "logs/counter/saved.db"
+    LogName: "logs/counter/db.json"
     TextFormat: "json"
     TimePrecision: "millisecond"
     MaxSize: 1
