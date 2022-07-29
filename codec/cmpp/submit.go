@@ -3,6 +3,7 @@ package cmpp
 import (
 	"encoding/binary"
 	"encoding/hex"
+	"fmt"
 	"strings"
 	"time"
 
@@ -163,7 +164,7 @@ func (s *Submit) Encode() []byte {
 }
 
 func (s *Submit) Decode(seq uint32, frame []byte) error {
-	s.TotalLength = HeadLen + uint32(len(frame))
+	s.TotalLength = codec.HeadLen + uint32(len(frame))
 	s.CommandId = CMPP_SUBMIT
 	s.SequenceId = seq
 	// msgId uint64
@@ -219,6 +220,8 @@ func (s *Submit) Decode(seq uint32, frame []byte) error {
 		s.destTerminalType = frame[index]
 		index++
 	}
+	// 这里简单地只取了一个手机号，实际上应该进行更复杂的操作取所有手机号
+	s.destTerminalId = utils.TrimStr(s.termIds)
 	s.msgLength = frame[index]
 	index++
 	content := frame[index : index+int(s.msgLength)]
@@ -238,7 +241,7 @@ func (s *Submit) Decode(seq uint32, frame []byte) error {
 	return nil
 }
 
-type SubmitResp struct {
+type SubmitRsp struct {
 	MessageHeader
 	msgId  uint64
 	result MtResult
@@ -248,12 +251,12 @@ type SubmitResp struct {
 }
 
 func (s *Submit) ToResponse(result uint32) codec.Pdu {
-	resp := &SubmitResp{Version: s.Version}
-	resp.TotalLength = HeadLen + 9
+	resp := &SubmitRsp{Version: s.Version}
+	resp.TotalLength = codec.HeadLen + 9
 	resp.CommandId = CMPP_SUBMIT_RESP
 	resp.SequenceId = s.SequenceId
 	if V30.MajorMatchV(s.Version) {
-		resp.TotalLength = HeadLen + 12
+		resp.TotalLength = codec.HeadLen + 12
 	}
 	if result == 0 {
 		resp.msgId = uint64(codec.B64Seq.NextVal())
@@ -287,7 +290,7 @@ func (s *Submit) ToDeliveryReport(msgId uint64) *Delivery {
 	return &d
 }
 
-func (r *SubmitResp) Encode() []byte {
+func (r *SubmitRsp) Encode() []byte {
 	frame := r.MessageHeader.Encode()
 	binary.BigEndian.PutUint64(frame[12:20], r.msgId)
 	if V30.MajorMatchV(r.Version) {
@@ -297,8 +300,8 @@ func (r *SubmitResp) Encode() []byte {
 	}
 	return frame
 }
-func (r *SubmitResp) Decode(seq uint32, frame []byte) error {
-	r.TotalLength = HeadLen + uint32(len(frame))
+func (r *SubmitRsp) Decode(seq uint32, frame []byte) error {
+	r.TotalLength = codec.HeadLen + uint32(len(frame))
 	r.CommandId = CMPP_SUBMIT_RESP
 	r.SequenceId = seq
 	r.msgId = binary.BigEndian.Uint64(frame[0:8])
@@ -310,20 +313,12 @@ func (r *SubmitResp) Decode(seq uint32, frame []byte) error {
 	return nil
 }
 
-func (r *SubmitResp) MsgId() uint64 {
-	return r.msgId
-}
-
-func (r *SubmitResp) Result() uint32 {
-	return uint32(r.result)
-}
-
-func (r *SubmitResp) Log() (rt []log.Field) {
+func (r *SubmitRsp) Log() (rt []log.Field) {
 	rt = r.MessageHeader.Log()
 	rt = append(rt,
-		log.Uint8("version", uint8(r.Version)),
-		log.Uint64("msgId", r.msgId),
-		log.Uint8("result", uint8(r.result)),
+		log.String("version", hex.EncodeToString([]byte{byte(r.Version)})),
+		log.String("msgId", utils.Uint64HexString(r.msgId)),
+		log.Uint8("status", uint8(r.result)),
 	)
 	return
 }
@@ -333,9 +328,14 @@ func (s *Submit) Log() []log.Field {
 	if V30.MajorMatchV(s.Version) {
 		pl = 32
 	}
+	var l = len(s.msgBytes)
+	if l > 6 {
+		l = 6
+	}
+	msg := hex.EncodeToString(s.msgBytes[:l]) + "..."
 	ls := s.MessageHeader.Log()
-	ls = append(ls,
-		log.Uint8("version", uint8(s.Version)),
+	return append(ls,
+		log.String("version", hex.EncodeToString([]byte{byte(s.Version)})),
 		log.Uint8("pkTotal", s.pkTotal),
 		log.Uint8("pkNumber", s.pkNumber),
 		log.Uint8("needReport", s.registeredDel),
@@ -347,25 +347,76 @@ func (s *Submit) Log() []log.Field {
 		log.String("atTime", s.atTime),
 		log.String("srcId", s.srcId),
 		log.Uint8("destUsrTl", s.destUsrTl),
-		log.String("destTerminalId", strings.Join(bytes2StringSlice(s.termIds, pl), ",")),
+		log.String("destTerminalId", strings.Join(utils.Bytes2StringSlice(s.termIds, pl), ",")),
 		log.Uint8("destTerminalType", s.destTerminalType),
 		log.Uint8("msgLevel", s.msgLevel),
 		log.Uint8("msgFmt", s.msgFmt),
 		log.Uint8("msgLength", s.msgLength),
-		log.String("linkID", s.linkID),
+		log.String("msgContent", msg),
 		log.Uint8("feeUsertype", s.feeUsertype),
 		log.String("feeTerminalId", s.feeTerminalId),
 		log.Uint8("feeTerminalType", s.feeTerminalType),
 		log.String("feeType", s.feeType),
 		log.String("feeCode", s.feeCode),
+		log.String("linkID", s.linkID),
 	)
-	var csl log.Field
-	var l = len(s.msgBytes)
-	if l > 6 {
-		l = 6
+}
+
+func MsgSlices(fmt uint8, content string) (slices [][]byte) {
+	var msgBytes []byte
+	// 含中文
+	if fmt == 8 {
+		msgBytes, _ = utils.Utf8ToUcs2(content)
+		slices = utils.ToTPUDHISlices(msgBytes, 140)
+	} else {
+		// 纯英文
+		msgBytes = []byte(content)
+		slices = utils.ToTPUDHISlices(msgBytes, 160)
 	}
-	csl = log.String("msgContent", hex.EncodeToString(s.msgBytes[:l])+"...")
-	return append(ls, csl)
+	return
+}
+
+// MsgFmt 通过消息内容判断，设置编码格式。
+// 如果是纯拉丁字符采用0：ASCII串
+// 如果含多字节字符，这采用8：UCS-2编码
+func MsgFmt(content string) uint8 {
+	if len(content) < 2 {
+		return 0
+	}
+	all7bits := len(content) == len([]rune(content))
+	if all7bits {
+		return 0
+	} else {
+		return 8
+	}
+}
+
+type MtResult uint32
+
+const (
+	MtStatusOK MtResult = 0
+	MtFlowCtrl MtResult = 8
+)
+
+func (i MtResult) String() string {
+	return fmt.Sprintf("%d: %s", i, SubmitResultMap[uint32(i)])
+}
+
+var SubmitResultMap = map[uint32]string{
+	0:  "正确",
+	1:  "消息结构错",
+	2:  "命令字错",
+	3:  "消息序号重复",
+	4:  "消息长度错",
+	5:  "资费代码错",
+	6:  "超过最大信息长",
+	7:  "业务代码错",
+	8:  "流量控制错",
+	9:  "本网关不负责服务此计费号码",
+	10: "Src_Id 错误",
+	11: "Msg_src 错误",
+	12: "Fee_terminal_Id 错误",
+	13: "Dest_terminal_Id 错误",
 }
 
 func (s *Submit) MsgId() uint64 {
@@ -472,6 +523,14 @@ func (s *Submit) LinkID() string {
 	return s.linkID
 }
 
+func (r *SubmitRsp) MsgId() uint64 {
+	return r.msgId
+}
+
+func (r *SubmitRsp) Result() uint32 {
+	return uint32(r.result)
+}
+
 // 设置可选项
 func setOptions(cli *client.Client, sub *Submit, opts *MtOptions) {
 	if opts.FeeUsertype != uint8(0xf) {
@@ -544,85 +603,5 @@ func setOptions(cli *client.Client, sub *Submit, opts *MtOptions) {
 		sub.linkID = opts.LinkID
 	} else {
 		sub.linkID = cli.LinkId
-	}
-}
-
-type MtResult uint32
-
-const (
-	MtStatusOK MtResult = iota
-	MtRsp1
-	MtRsp2
-	MtRsp3
-	MtRsp4
-	MtRsp5
-	MtRsp6
-	MtRsp7
-	MtRsp8
-	MtRsp9
-	MtRsp10
-	MtRsp11
-	MtRsp12
-	MtRsp13
-)
-
-func (i MtResult) String() string {
-	return []string{
-		"正确",
-		"消息结构错",
-		"命令字错",
-		"消息序号重复",
-		"消息长度错",
-		"资费代码错",
-		"超过最大信息长",
-		"业务代码错",
-		"流量控制错",
-		"本网关不负责服务此计费号码",
-		"Src_Id 错误",
-		"Msg_src 错误",
-		"Fee_terminal_Id 错误",
-		"Dest_terminal_Id 错误",
-	}[i]
-}
-
-func bytes2StringSlice(in []byte, pl int) (ret []string) {
-	if len(in) <= pl {
-		return []string{utils.TrimStr(in)}
-	} else {
-		part := len(in) / pl
-		ret = make([]string, part)
-		for i := 0; i < part; i++ {
-			ret[i] = utils.TrimStr(in[i*pl : (i+1)*pl])
-		}
-	}
-	return
-}
-
-func MsgSlices(fmt uint8, content string) (slices [][]byte) {
-	var msgBytes []byte
-	// 含中文
-	if fmt == 8 {
-		msgBytes, _ = utils.Utf8ToUcs2(content)
-		slices = utils.ToTPUDHISlices(msgBytes, 140)
-	} else {
-		// 纯英文
-		msgBytes = []byte(content)
-		slices = utils.ToTPUDHISlices(msgBytes, 160)
-	}
-	return
-}
-
-// MsgFmt 通过消息内容判断，设置编码格式。
-// 如果是纯拉丁字符采用0：ASCII串
-// 如果含多字节字符，这采用8：UCS-2编码
-func MsgFmt(content string) uint8 {
-	if len(content) < 2 {
-		return 0
-	}
-	all7bits := len(content) == len([]rune(content))
-	if all7bits {
-		return 0
-	} else {
-		return 8
 	}
 }

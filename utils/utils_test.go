@@ -129,3 +129,15 @@ func TestOctetString(t *testing.T) {
 		t.Fatalf("The result is %s, not equal to our expected %s", s, expected)
 	}
 }
+
+func TestUint64HexString(t *testing.T) {
+	var i, j, k uint64 = 0xffffffffffffff08, 0xffffffffffff08, 0xabcdef01
+	t.Log(utils.Uint64HexString(i))
+	t.Log(utils.Uint64HexString(j))
+	t.Log(utils.Uint64HexString(k))
+
+	var x, y, z uint32 = 0xfffff08, 0xffff08, 0xcdef01
+	t.Log(utils.Uint32HexString(x))
+	t.Log(utils.Uint32HexString(y))
+	t.Log(utils.Uint32HexString(z))
+}

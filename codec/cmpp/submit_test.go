@@ -119,7 +119,7 @@ func TestSubmit_Encode(t *testing.T) {
 		mt := mt.(*Submit)
 		mt.Version = Version(cli.Version)
 		t.Logf("mt.String()  : %v", mt)
-		resp := mt.ToResponse(0).(*SubmitResp)
+		resp := mt.ToResponse(0).(*SubmitRsp)
 		t.Logf("resp.String(): %v", resp)
 
 		enc := mt.Encode()

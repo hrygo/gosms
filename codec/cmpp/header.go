@@ -4,12 +4,8 @@ import (
 	"encoding/binary"
 
 	"github.com/hrygo/log"
-)
 
-const (
-	Pkl = "pkl" // 数据包总长度
-	Cmd = "op"  // 数据包类型（命令类型）
-	Seq = "seq" // 序号（一对请求与响应序号相同）
+	"github.com/hrygo/gosmsn/codec"
 )
 
 type MessageHeader struct {
@@ -19,8 +15,8 @@ type MessageHeader struct {
 }
 
 func (header *MessageHeader) Encode() []byte {
-	if header.TotalLength < HeadLen {
-		header.TotalLength = HeadLen
+	if header.TotalLength < codec.HeadLen {
+		header.TotalLength = codec.HeadLen
 	}
 	frame := make([]byte, header.TotalLength)
 	binary.BigEndian.PutUint32(frame[0:4], header.TotalLength)
@@ -38,8 +34,8 @@ func (header *MessageHeader) Decode(frame []byte) error {
 
 func (header *MessageHeader) Log() []log.Field {
 	ls := make([]log.Field, 0, 16)
-	ls = append(ls, log.Uint32(Pkl, header.TotalLength),
-		log.String(Cmd, header.CommandId.String()),
-		log.Uint32(Seq, header.SequenceId))
+	ls = append(ls, log.Uint32(codec.Pkl, header.TotalLength),
+		log.String(codec.Cmd, header.CommandId.String()),
+		log.Uint32(codec.Seq, header.SequenceId))
 	return ls
 }

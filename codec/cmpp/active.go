@@ -11,7 +11,7 @@ type ActiveTest MessageHeader
 type ActiveTestRsp MessageHeader
 
 func NewActiveTest(seq uint32) *ActiveTest {
-	return &ActiveTest{TotalLength: HeadLen, CommandId: CMPP_ACTIVE_TEST, SequenceId: seq}
+	return &ActiveTest{TotalLength: codec.HeadLen, CommandId: CMPP_ACTIVE_TEST, SequenceId: seq}
 }
 
 func (at *ActiveTest) Encode() []byte {
@@ -43,7 +43,7 @@ func (at *ActiveTestRsp) Encode() []byte {
 }
 
 func (at *ActiveTestRsp) Decode(seqId uint32, _ []byte) error {
-	at.TotalLength = HeadLen + 1
+	at.TotalLength = codec.HeadLen + 1
 	at.CommandId = CMPP_ACTIVE_TEST_RESP
 	at.SequenceId = seqId
 	return nil

@@ -64,7 +64,7 @@ func handleCmppSubmit(s *Server, sc *session, mt *cmpp.Submit) {
 	mockRandPrecessTime()
 	// 5. 按比例模拟失败情况
 	if utils.DiceCheck(bootstrap.ConfigYml.GetFloat64("Server.Mock.SuccessRate")) {
-		result = uint32(cmpp.MtRsp8)
+		result = uint32(cmpp.MtFlowCtrl)
 	}
 	// ...
 	// n. 发送响应
@@ -80,13 +80,13 @@ func handleCmppSubmit(s *Server, sc *session, mt *cmpp.Submit) {
 		return nil
 	})
 	if err != nil {
-		log.Error(msg, FlatMapLog(sc.LogSession(), []log.Field{cmpp.CMPP_SUBMIT_RESP.Log(), SErrField(err.Error())})...)
+		log.Error(msg, FlatMapLog(sc.LogSession(), []log.Field{cmpp.CMPP_SUBMIT_RESP.OpLog(), SErrField(err.Error())})...)
 	}
 	// n+1. SMSC异步发送消息
 	// ...
 	// n+m. 模拟发送状态报告
 	if result == uint32(cmpp.MtStatusOK) {
-		rsp := resp.(*cmpp.SubmitResp)
+		rsp := resp.(*cmpp.SubmitRsp)
 		mockSendCmppReport(sc, mt, rsp.MsgId())
 	}
 }
@@ -125,6 +125,6 @@ func mockSendCmppReport(sc *session, sub *cmpp.Submit, msgId uint64) {
 		return nil
 	})
 	if err != nil {
-		log.Error(msg, FlatMapLog(sc.LogSession(), []log.Field{cmpp.CMPP_DELIVER.Log(), SErrField(err.Error())})...)
+		log.Error(msg, FlatMapLog(sc.LogSession(), []log.Field{cmpp.CMPP_DELIVER.OpLog(), SErrField(err.Error())})...)
 	}
 }

@@ -27,6 +27,25 @@ type Connect struct {
 	secret string
 }
 
+func (c *Connect) SourceAddr() string {
+	return c.sourceAddr
+}
+func (c *Connect) AuthenticatorSource() []byte {
+	return c.authenticatorSource
+}
+
+func (c *Connect) Timestamp() uint32 {
+	return c.timestamp
+}
+
+func (c *Connect) Version() Version {
+	return c.version
+}
+
+func (c *Connect) SetSecret(secret string) {
+	c.secret = secret
+}
+
 const ConnectRspPktLenV3 = 12 + 4 + 16 + 1
 const ConnectRspPktLenV2 = 12 + 1 + 16 + 1
 
@@ -35,6 +54,18 @@ type ConnectResp struct {
 	status            ConnStatus // 状态码，3.0版本4字节，2.0版本1字节
 	authenticatorISMG []byte     // 认证串，16字节
 	version           Version    // 版本，1字节
+}
+
+func (r *ConnectResp) AuthenticatorISMG() []byte {
+	return r.authenticatorISMG
+}
+
+func (r *ConnectResp) Version() Version {
+	return r.version
+}
+
+func (r *ConnectResp) Status() ConnStatus {
+	return r.status
 }
 
 func NewConnect(cl *client.Client, seq uint32) *Connect {
@@ -82,26 +113,11 @@ func (c *Connect) Decode(seq uint32, frame []byte) error {
 func (c *Connect) Log() []log.Field {
 	ls := c.MessageHeader.Log()
 	ls = append(ls,
-		log.String("sourceAddr", c.sourceAddr),
+		log.String("clientID", c.sourceAddr),
 		log.String("authenticatorSource", hex.EncodeToString(c.authenticatorSource)),
-		log.Uint8("version", uint8(c.version)),
+		log.String("version", hex.EncodeToString([]byte{byte(c.version)})),
 		log.String("timestamp", fmt.Sprintf("%010d", c.timestamp)))
 	return ls
-}
-
-func (c *Connect) SourceAddr() string {
-	return c.sourceAddr
-}
-func (c *Connect) AuthenticatorSource() []byte {
-	return c.authenticatorSource
-}
-
-func (c *Connect) Timestamp() uint32 {
-	return c.timestamp
-}
-
-func (c *Connect) Version() Version {
-	return c.version
 }
 
 func (c *Connect) Check(cl *client.Client) ConnStatus {
@@ -161,10 +177,6 @@ func (c *Connect) ToResponse(code uint32) codec.Pdu {
 	return rsp
 }
 
-func (c *Connect) SetSecret(secret string) {
-	c.secret = secret
-}
-
 // 以下为Response
 
 func (r *ConnectResp) Encode() []byte {
@@ -207,16 +219,12 @@ func (r *ConnectResp) Decode(seq uint32, frame []byte) error {
 	return nil
 }
 
-func (r *ConnectResp) Status() ConnStatus {
-	return r.status
-}
-
 func (r *ConnectResp) Log() []log.Field {
 	ls := r.MessageHeader.Log()
 	ls = append(ls,
 		log.Uint8("status", uint8(r.status)),
 		log.String("authenticatorISMG", hex.EncodeToString(r.authenticatorISMG)),
-		log.Uint8("version", uint8(r.version)))
+		log.String("version", hex.EncodeToString([]byte{byte(r.version)})))
 	return ls
 }
 
@@ -232,12 +240,14 @@ const (
 )
 
 func (i ConnStatus) String() string {
-	return []string{
-		"成功",
-		"消息结构错",
-		"非法源地址",
-		"认证错",
-		"版本太高",
-		"其他错误：连接数过多等",
-	}[i]
+	return fmt.Sprintf("%d: %s", i, ConnectStatusMap[uint32(i)])
+}
+
+var ConnectStatusMap = map[uint32]string{
+	0: "成功",
+	1: "消息结构错",
+	2: "非法源地址",
+	3: "认证错",
+	4: "版本太高",
+	5: "其他错误",
 }

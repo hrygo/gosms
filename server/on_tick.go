@@ -107,7 +107,7 @@ func activeTest(s *Server, sc *session) {
 // 模拟发送随机上行短信
 func mockDelivery(s *Server, sc *session) {
 	// 开关检查
-	open := bs.ConfigYml.GetBool("Mock.Delivery.Enable")
+	open := bs.ConfigYml.GetBool("Server.Mock.Delivery.Enable")
 	if !open {
 		return
 	}
@@ -116,7 +116,7 @@ func mockDelivery(s *Server, sc *session) {
 		return
 	}
 	// 获取模拟消息内容
-	contents := bs.ConfigYml.GetStringSlice("Mock.Delivery.Contents")
+	contents := bs.ConfigYml.GetStringSlice("Server.Mock.Delivery.Contents")
 	if len(contents) == 0 {
 		return
 	}
@@ -146,7 +146,7 @@ func mockDelivery(s *Server, sc *session) {
 			return nil
 		})
 		if err == nil {
-			log.Info(msg, FlatMapLog(sc.LogSession(), dly.Log())...)
+			log.Debug(msg, FlatMapLog(sc.LogSession(), dly.Log())...)
 		} else {
 			log.Error(msg, FlatMapLog(sc.LogSession(), []log.Field{SErrField(err.Error())})...)
 		}

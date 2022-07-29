@@ -2,6 +2,7 @@ package cmpp
 
 import (
 	"encoding/binary"
+	"fmt"
 
 	"github.com/hrygo/gosmsn/codec"
 	"github.com/hrygo/gosmsn/utils"
@@ -14,6 +15,10 @@ type Report struct {
 	doneTime       string // yyMMddHHmm 【10字节】
 	destTerminalId string // SP 发送 CMPP_SUBMIT 消息的目标终端  【21字节】
 	smscSequence   uint32 // 取自SMSC发送状态报告的消息体中的消息标识。【4字节】
+}
+
+func (rt *Report) String() string {
+	return fmt.Sprintf("%x %-7s %-10s %-10s %-21s %d", rt.msgId, rt.stat, rt.submitTime, rt.doneTime, rt.destTerminalId, rt.smscSequence)
 }
 
 func NewReport(msgId uint64, destTerminalId string, submitTime string, doneTime string) *Report {

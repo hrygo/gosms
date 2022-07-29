@@ -84,6 +84,6 @@ func handleCmppConnect(s *Server, sc *session, login *cmpp.Connect) {
 		return nil
 	})
 	if err != nil {
-		log.Error(msg, FlatMapLog(sc.LogSession(), []log.Field{cmpp.CMPP_CONNECT.Log(), SErrField(err.Error())})...)
+		log.Error(msg, FlatMapLog(sc.LogSession(), []log.Field{cmpp.CMPP_CONNECT.OpLog(), SErrField(err.Error())})...)
 	}
 }

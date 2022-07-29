@@ -11,7 +11,7 @@ type Terminate MessageHeader
 type TerminateRsp MessageHeader
 
 func NewTerminate(seq uint32) *Terminate {
-	return &Terminate{TotalLength: HeadLen, CommandId: CMPP_TERMINATE, SequenceId: seq}
+	return &Terminate{TotalLength: codec.HeadLen, CommandId: CMPP_TERMINATE, SequenceId: seq}
 }
 
 func (t *Terminate) Encode() []byte {
@@ -19,7 +19,7 @@ func (t *Terminate) Encode() []byte {
 }
 
 func (t *Terminate) Decode(seq uint32, _ []byte) error {
-	t.TotalLength = HeadLen
+	t.TotalLength = codec.HeadLen
 	t.CommandId = CMPP_TERMINATE
 	t.SequenceId = seq
 	return nil
@@ -27,7 +27,7 @@ func (t *Terminate) Decode(seq uint32, _ []byte) error {
 
 func (t *Terminate) ToResponse(_ uint32) codec.Pdu {
 	rsp := &TerminateRsp{}
-	rsp.TotalLength = HeadLen
+	rsp.TotalLength = codec.HeadLen
 	rsp.CommandId = CMPP_TERMINATE_RESP
 	rsp.SequenceId = t.SequenceId
 	return rsp
@@ -42,7 +42,7 @@ func (r *TerminateRsp) Encode() []byte {
 }
 
 func (r *TerminateRsp) Decode(seqId uint32, _ []byte) error {
-	r.TotalLength = HeadLen
+	r.TotalLength = codec.HeadLen
 	r.CommandId = CMPP_TERMINATE_RESP
 	r.SequenceId = seqId
 	return nil

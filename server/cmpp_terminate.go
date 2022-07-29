@@ -62,6 +62,6 @@ func handleCmppTerminate(s *Server, sc *session, term *cmpp.Terminate) {
 		return nil
 	})
 	if err != nil {
-		log.Error(msg, FlatMapLog(sc.LogSession(), []log.Field{cmpp.CMPP_TERMINATE.Log(), SErrField(err.Error())})...)
+		log.Error(msg, FlatMapLog(sc.LogSession(), []log.Field{cmpp.CMPP_TERMINATE.OpLog(), SErrField(err.Error())})...)
 	}
 }

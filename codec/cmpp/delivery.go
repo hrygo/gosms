@@ -3,6 +3,7 @@ package cmpp
 import (
 	"encoding/binary"
 	"encoding/hex"
+	"fmt"
 
 	"github.com/hrygo/log"
 
@@ -102,7 +103,7 @@ func (d *Delivery) Encode() []byte {
 }
 
 func (d *Delivery) Decode(seq uint32, frame []byte) error {
-	d.TotalLength = HeadLen + uint32(len(frame))
+	d.TotalLength = codec.HeadLen + uint32(len(frame))
 	d.CommandId = CMPP_DELIVER
 	d.SequenceId = seq
 	d.msgId = binary.BigEndian.Uint64(frame[0:8])
@@ -145,9 +146,9 @@ func (d *Delivery) Decode(seq uint32, frame []byte) error {
 
 func (d *Delivery) ToResponse(code uint32) codec.Pdu {
 	dr := &DeliveryRsp{}
-	dr.TotalLength = HeadLen + 9
+	dr.TotalLength = codec.HeadLen + 9
 	if V30.MajorMatchV(d.Version) {
-		dr.TotalLength = HeadLen + 12
+		dr.TotalLength = codec.HeadLen + 12
 	}
 	dr.CommandId = CMPP_DELIVER_RESP
 	dr.msgId = d.msgId
@@ -187,8 +188,8 @@ func (d *Delivery) RegisteredDelivery() uint8 {
 func (d *Delivery) Log() []log.Field {
 	ls := d.MessageHeader.Log()
 	ls = append(ls,
-		log.Uint8("version", uint8(d.Version)),
-		log.Uint64("msgId", uint64(d.Version)),
+		log.String("version", hex.EncodeToString([]byte{byte(d.Version)})),
+		log.String("msgId", utils.Uint64HexString(d.msgId)),
 		log.Uint8("isReport", d.registeredDelivery),
 		log.Uint8("msgFmt", d.msgFmt),
 		log.Uint8("msgLength", d.msgLength),
@@ -207,7 +208,7 @@ func (d *Delivery) Log() []log.Field {
 		l = 6
 	}
 	if d.registeredDelivery == 1 {
-		csl = log.Reflect("msgContent", d.report)
+		csl = log.String("msgContent", d.report.String())
 	} else {
 		csl = log.String("msgContent", hex.EncodeToString(bs[:l])+"...")
 	}
@@ -236,7 +237,7 @@ func (r *DeliveryRsp) Encode() []byte {
 
 func (r *DeliveryRsp) Decode(seq uint32, frame []byte) error {
 	// check
-	r.TotalLength = HeadLen + uint32(len(frame))
+	r.TotalLength = codec.HeadLen + uint32(len(frame))
 	r.CommandId = CMPP_DELIVER_RESP
 	r.SequenceId = seq
 	r.msgId = binary.BigEndian.Uint64(frame[0:8])
@@ -251,9 +252,9 @@ func (r *DeliveryRsp) Decode(seq uint32, frame []byte) error {
 func (r *DeliveryRsp) Log() (rt []log.Field) {
 	rt = r.MessageHeader.Log()
 	rt = append(rt,
-		log.Uint8("version", uint8(r.Version)),
-		log.Uint64("msgId", r.msgId),
-		log.Uint8("result", uint8(r.result)),
+		log.String("version", hex.EncodeToString([]byte{byte(r.Version)})),
+		log.String("msgId", utils.Uint64HexString(r.msgId)),
+		log.Uint8("status", uint8(r.result)),
 	)
 	return
 }
@@ -264,30 +265,19 @@ func (r *DeliveryRsp) SetResult(result DlyResult) {
 
 type DlyResult uint32
 
-const (
-	DlyRspStatusOK DlyResult = iota
-	DlyRsp1
-	DlyRsp2
-	DlyRsp3
-	DlyRsp4
-	DlyRsp5
-	DlyRsp6
-	DlyRsp7
-	DlyRsp8
-	DlyRsp9
-)
-
 func (i DlyResult) String() string {
-	return []string{
-		"正确",
-		"消息结构错",
-		"命令字错",
-		"消息序号重复",
-		"消息长度错",
-		"资费代码错",
-		"超过最大信息长",
-		"业务代码错",
-		"流量控制错",
-		"未知错误",
-	}[i]
+	return fmt.Sprintf("%d: %s", i, DeliveryResultMap[uint32(i)])
+}
+
+var DeliveryResultMap = map[uint32]string{
+	0: "正确",
+	1: "消息结构错",
+	2: "命令字错",
+	3: "消息序号重复",
+	4: "消息长度错",
+	5: "资费代码错",
+	6: "超过最大信息长",
+	7: "业务代码错",
+	8: "流量控制错",
+	9: "未知错误",
 }

@@ -6,6 +6,20 @@ import (
 	"github.com/hrygo/log"
 )
 
+const (
+	Pkl              = "pkl" // 数据包总长度
+	Cmd              = "op"  // 数据包类型（命令类型）
+	Seq              = "seq" // 序号（一对请求与响应序号相同）
+	HeadLen   uint32 = 12
+	PacketMax        = 5120
+)
+
+type Operation interface {
+	ToInt() uint32
+	OpLog() log.Field
+	String() string
+}
+
 type Logger interface {
 	Log() []log.Field
 }

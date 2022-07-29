@@ -39,6 +39,11 @@ func TimeStamp2Str(t uint32) string {
 	return fmt.Sprintf("%010d", t)
 }
 
+func FormatTime(time time.Time) string {
+	s := time.Format("060102150405")
+	return s + "032+"
+}
+
 func Utf8ToUcs2(in string) ([]byte, error) {
 	if !utf8.ValidString(in) {
 		return nil, ErrInvalidUtf8Rune
@@ -111,6 +116,53 @@ func TrimOctetString(in []byte) []byte {
 
 func TrimStr(in []byte) string {
 	return string(TrimOctetString(in))
+}
+
+var NumTable = [16]byte{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'}
+
+func Uint64HexString(i uint64) string {
+	var sb strings.Builder
+	sb.Grow(16)
+
+	for shift := 60; shift >= 0; shift -= 4 {
+		sb.WriteByte(NumTable[(i>>shift)&0x0f])
+	}
+	return sb.String()
+}
+
+func Uint32HexString(i uint32) string {
+	var sb strings.Builder
+	sb.Grow(8)
+
+	for shift := 28; shift >= 0; shift -= 4 {
+		sb.WriteByte(NumTable[(i>>shift)&0x0f])
+	}
+	return sb.String()
+}
+
+func CopyStr(dest []byte, src string, index int, len int) int {
+	copy(dest[index:index+len], src)
+	index += len
+	return index
+}
+
+func CopyByte(dest []byte, src byte, index int) int {
+	dest[index] = src
+	index++
+	return index
+}
+
+func Bytes2StringSlice(in []byte, pl int) (ret []string) {
+	if len(in) <= pl {
+		return []string{TrimStr(in)}
+	} else {
+		part := len(in) / pl
+		ret = make([]string, part)
+		for i := 0; i < part; i++ {
+			ret[i] = TrimStr(in[i*pl : (i+1)*pl])
+		}
+	}
+	return
 }
 
 // ToTPUDHISlices 拆分为长短信切片

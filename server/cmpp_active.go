@@ -65,6 +65,6 @@ func handleCmppActive(s *Server, sc *session, pdu *cmpp.ActiveTest) {
 		return nil
 	})
 	if err != nil {
-		log.Error(msg, FlatMapLog(sc.LogSession(), []log.Field{cmpp.CMPP_ACTIVE_TEST_RESP.Log(), SErrField(err.Error())})...)
+		log.Error(msg, FlatMapLog(sc.LogSession(), []log.Field{cmpp.CMPP_ACTIVE_TEST_RESP.OpLog(), SErrField(err.Error())})...)
 	}
 }

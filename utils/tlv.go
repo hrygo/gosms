@@ -252,6 +252,9 @@ func (tl *TlvList) Write(w io.Writer) error {
 }
 
 func (tl *TlvList) String() string {
+	if tl == nil {
+		return "[]"
+	}
 	var sb strings.Builder
 	sb.Grow(int(8 * tl.Length()))
 	sb.WriteString("[")
