@@ -33,7 +33,7 @@ type Deliver struct {
 	Version Version
 }
 
-type DeliverResp struct {
+type DeliverRsp struct {
 	MessageHeader
 	msgId  []byte // 【10字节】短消息流水号
 	status Status
@@ -42,14 +42,16 @@ type DeliverResp struct {
 	Version Version
 }
 
-func NewDeliver(cli *client.Client, srcNo string, destNo string, txt string) codec.RequestPdu {
+func NewDeliver(cli *client.Client, phone string, destNo string, txt string, seq uint32) codec.RequestPdu {
 	baseLen := uint32(89)
 	dlv := &Deliver{Version: Version(cli.Version)}
+	dlv.RequestId = SMGP_DELIVER
+	dlv.SequenceId = seq
 	dlv.msgId = codec.BcdSeq.NextVal()
 	dlv.isReport = 0
 	dlv.msgFormat = 15
 	dlv.recvTime = time.Now().Format("20060102150405")
-	dlv.srcTermID = srcNo
+	dlv.srcTermID = phone
 	dlv.destTermID = cli.SmsDisplayNo + destNo
 	// 上行最长70字符
 	subTxt := txt
@@ -67,12 +69,13 @@ func NewDeliver(cli *client.Client, srcNo string, destNo string, txt string) cod
 	return dlv
 }
 
-func NewDeliveryReport(cli *client.Client, mt *Submit, msgId []byte) *Deliver {
+func NewDeliveryReport(cli *client.Client, mt *Submit, seq uint32, msgId []byte) *Deliver {
 	baseLen := uint32(89)
 	dlv := &Deliver{Version: Version(cli.Version)}
-	rpt := NewReport(msgId)
+	dlv.RequestId = SMGP_DELIVER
+	dlv.SequenceId = seq
 	dlv.msgId = codec.BcdSeq.NextVal()
-	dlv.report = rpt
+	dlv.report = NewReport(msgId)
 	dlv.msgLength = 115
 	dlv.isReport = 1
 	dlv.msgFormat = 0
@@ -143,7 +146,7 @@ func (d *Deliver) Decode(seq uint32, frame []byte) error {
 }
 
 func (d *Deliver) ToResponse(code uint32) codec.Pdu {
-	resp := &DeliverResp{Version: d.Version}
+	resp := &DeliverRsp{Version: d.Version}
 	resp.RequestId = SMGP_DELIVER_RESP
 	resp.PacketLength = 26
 	resp.SequenceId = d.SequenceId
@@ -200,7 +203,7 @@ func (d *Deliver) IsReport() bool {
 	return d.isReport == 1
 }
 
-func (r *DeliverResp) Encode() []byte {
+func (r *DeliverRsp) Encode() []byte {
 	frame := r.MessageHeader.Encode()
 	index := 12
 	copy(frame[index:index+10], r.msgId)
@@ -209,7 +212,7 @@ func (r *DeliverResp) Encode() []byte {
 	return frame
 }
 
-func (r *DeliverResp) Decode(seq uint32, frame []byte) error {
+func (r *DeliverRsp) Decode(seq uint32, frame []byte) error {
 	r.PacketLength = codec.HeadLen + uint32(len(frame))
 	r.RequestId = SMGP_DELIVER_RESP
 	r.SequenceId = seq
@@ -219,20 +222,20 @@ func (r *DeliverResp) Decode(seq uint32, frame []byte) error {
 	return nil
 }
 
-func (r *DeliverResp) String() string {
+func (r *DeliverRsp) String() string {
 	return fmt.Sprintf("{ header: %s, msgId: %x, status: \"%s\" }", &r.MessageHeader, r.msgId, r.status)
 }
 
-func (r *DeliverResp) Log() (rt []log.Field) {
+func (r *DeliverRsp) Log() (rt []log.Field) {
 	rt = r.MessageHeader.Log()
 	rt = append(rt,
 		log.String("version", hex.EncodeToString([]byte{byte(r.Version)})),
 		log.String("msgId", hex.EncodeToString(r.msgId)),
-		log.Uint8("status", uint8(r.status)),
+		log.String("status", r.status.String()),
 	)
 	return
 }
-func (r *DeliverResp) MsgId() string {
+func (r *DeliverRsp) MsgId() string {
 	return fmt.Sprintf("%x", r.msgId)
 }
 
@@ -280,6 +283,6 @@ func (d *Deliver) TlvList() *utils.TlvList {
 	return d.tlvList
 }
 
-func (r *DeliverResp) Status() Status {
+func (r *DeliverRsp) Status() Status {
 	return r.status
 }

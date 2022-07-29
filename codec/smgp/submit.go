@@ -283,7 +283,7 @@ func (r *SubmitRsp) Log() (rt []log.Field) {
 	rt = append(rt,
 		log.String("version", hex.EncodeToString([]byte{byte(r.Version)})),
 		log.String("msgId", hex.EncodeToString(r.msgId)),
-		log.Uint8("status", uint8(r.status)),
+		log.String("status", r.status.String()),
 	)
 	return
 }

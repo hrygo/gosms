@@ -9,8 +9,8 @@ import (
 type ActiveTest MessageHeader
 type ActiveTestRsp MessageHeader
 
-func NewActiveTest() *ActiveTest {
-	at := &ActiveTest{PacketLength: codec.HeadLen, RequestId: SMGP_ACTIVE_TEST, SequenceId: uint32(codec.B32Seq.NextVal())}
+func NewActiveTest(seq uint32) *ActiveTest {
+	at := &ActiveTest{PacketLength: codec.HeadLen, RequestId: SMGP_ACTIVE_TEST, SequenceId: seq}
 	return at
 }
 

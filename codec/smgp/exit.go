@@ -9,8 +9,8 @@ import (
 type Exit MessageHeader
 type ExitRsp MessageHeader
 
-func NewExit() *Exit {
-	at := &Exit{PacketLength: codec.HeadLen, RequestId: SMGP_EXIT, SequenceId: uint32(codec.B32Seq.NextVal())}
+func NewExit(seq uint32) *Exit {
+	at := &Exit{PacketLength: codec.HeadLen, RequestId: SMGP_EXIT, SequenceId: seq}
 	return at
 }
 

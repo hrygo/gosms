@@ -120,31 +120,31 @@ func (c *Connect) Log() []log.Field {
 	return ls
 }
 
-func (c *Connect) Check(cl *client.Client) ConnStatus {
-	if cl == nil {
+func (c *Connect) Check(cli *client.Client) ConnStatus {
+	if cli == nil {
 		return ConnStatusInvalidSrcAddr
 	}
-	if !c.version.MajorMatch(cl.Version) {
+	if !c.version.MajorMatch(cli.Version) {
 		return ConnStatusVerTooHigh
 	}
 
 	authSource := c.authenticatorSource
 	authMd5 := md5.Sum(bytes.Join([][]byte{
-		[]byte(cl.ClientId),
+		[]byte(cli.ClientId),
 		make([]byte, 9),
-		[]byte(cl.SharedSecret),
+		[]byte(cli.SharedSecret),
 		[]byte(utils.TimeStamp2Str(c.timestamp)),
 	}, nil))
 	log.Debugf("[AuthCheck] input  : %x", authSource)
 	log.Debugf("[AuthCheck] compute: %x", authMd5)
 	ok := bytes.Equal(authSource, authMd5[:])
 	if ok {
+		c.SetSecret(cli.SharedSecret)
 		return ConnStatusOK
 	}
 	return ConnStatusAuthFailed
 }
 
-// ToResponse 由Request生成Response，调用前需要SetSecret
 func (c *Connect) ToResponse(code uint32) codec.Pdu {
 	rsp := &ConnectResp{}
 	// 3.x 与 2.x Status长度不同
@@ -222,7 +222,7 @@ func (r *ConnectResp) Decode(seq uint32, frame []byte) error {
 func (r *ConnectResp) Log() []log.Field {
 	ls := r.MessageHeader.Log()
 	ls = append(ls,
-		log.Uint8("status", uint8(r.status)),
+		log.String("status", r.status.String()),
 		log.String("authenticatorISMG", hex.EncodeToString(r.authenticatorISMG)),
 		log.String("version", hex.EncodeToString([]byte{byte(r.version)})))
 	return ls

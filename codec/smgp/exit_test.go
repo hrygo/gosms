@@ -8,7 +8,7 @@ import (
 )
 
 func TestExit(t *testing.T) {
-	exit := smgp.NewExit()
+	exit := smgp.NewExit(uint32(codec.B32Seq.NextVal()))
 	t.Logf("%T : %s", exit, exit)
 
 	data := exit.Encode()

@@ -12,6 +12,7 @@ import (
 	"github.com/hrygo/gosmsn/client"
 	"github.com/hrygo/gosmsn/codec"
 	"github.com/hrygo/gosmsn/codec/cmpp"
+	"github.com/hrygo/gosmsn/codec/smgp"
 	"github.com/hrygo/gosmsn/my_errors"
 	"github.com/hrygo/gosmsn/utils"
 )
@@ -84,7 +85,7 @@ func activeTest(s *Server, sc *session) {
 			case SGIP:
 				// active =
 			case SMGP:
-				// active =
+				active = smgp.NewActiveTest(seq)
 			}
 			pack := active.Encode()
 			err := sc.conn.AsyncWrite(pack, func(c gnet.Conn) error {
@@ -134,11 +135,11 @@ func mockDelivery(s *Server, sc *session) {
 		var seq = uint32(codec.B32Seq.NextVal())
 		switch s.name {
 		case CMPP:
-			dly = cmpp.NewDelivery(cli, "10011110000", text, cli.SmsDisplayNo+subNo, cli.ServiceId, seq)
+			dly = cmpp.NewDelivery(cli, "18600001111", text, cli.SmsDisplayNo+subNo, cli.ServiceId, seq)
 		case SGIP:
 			// dly =
 		case SMGP:
-			// dly =
+			dly = smgp.NewDeliver(cli, "13300001111", cli.SmsDisplayNo+subNo, text, seq)
 		}
 		pack := dly.Encode()
 		err := sc.conn.AsyncWrite(pack, func(c gnet.Conn) error {
@@ -164,7 +165,7 @@ func sendTerminate(s *Server, sc *session) {
 		case SGIP:
 			// term =
 		case SMGP:
-			// term =
+			term = smgp.NewExit(seq)
 		}
 		pack := term.Encode()
 		err := sc.conn.AsyncWrite(pack, func(c gnet.Conn) error {

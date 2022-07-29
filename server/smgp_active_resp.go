@@ -7,11 +7,11 @@ import (
 	"github.com/hrygo/log"
 	"github.com/panjf2000/gnet/v2"
 
-	"github.com/hrygo/gosmsn/codec/cmpp"
+	"github.com/hrygo/gosmsn/codec/smgp"
 )
 
-var cmppActiveResp TrafficHandler = func(cmd, seq uint32, buff []byte, c gnet.Conn, s *Server) (next bool, action gnet.Action) {
-	if uint32(cmpp.CMPP_ACTIVE_TEST_RESP) != cmd {
+var smgpActiveResp TrafficHandler = func(cmd, seq uint32, buff []byte, c gnet.Conn, s *Server) (next bool, action gnet.Action) {
+	if uint32(smgp.SMGP_ACTIVE_TEST_RESP) != cmd {
 		return true, gnet.None
 	}
 
@@ -20,7 +20,7 @@ var cmppActiveResp TrafficHandler = func(cmd, seq uint32, buff []byte, c gnet.Co
 		return false, gnet.Close
 	}
 
-	pdu := &cmpp.ActiveTestRsp{}
+	pdu := &smgp.ActiveTestRsp{}
 	err := pdu.Decode(seq, buff)
 	if err != nil {
 		decodeErrorLog(sc, buff)
@@ -29,7 +29,7 @@ var cmppActiveResp TrafficHandler = func(cmd, seq uint32, buff []byte, c gnet.Co
 
 	// 异步处理，避免阻塞 event-loop
 	err = sc.Pool().Submit(func() {
-		handleCmppActiveResp(s, sc, pdu)
+		handleSmgpActiveResp(s, sc, pdu)
 	})
 	if err != nil {
 		log.Error(fmt.Sprintf("[%s] OnTraffic %s", sc.ServerName(), RC),
@@ -40,7 +40,7 @@ var cmppActiveResp TrafficHandler = func(cmd, seq uint32, buff []byte, c gnet.Co
 	return false, gnet.None
 }
 
-func handleCmppActiveResp(s *Server, sc *session, pdu *cmpp.ActiveTestRsp) {
+func handleSmgpActiveResp(s *Server, sc *session, pdu *smgp.ActiveTestRsp) {
 	// 【会话级别流控】采用通道控制消息收发速度,向通道发送信号
 	sc.window <- struct{}{}
 	defer func() { <-sc.window }()

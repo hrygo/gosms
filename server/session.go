@@ -196,7 +196,8 @@ func (s *session) CounterAddDly() {
 	s.Lock()
 	defer s.Unlock()
 	s.dly += 1
-	s.lastUseTime = time.Now()
+	// 当前模拟上行短信由自身触发，不算客户端活动，不更新时间
+	// s.lastUseTime = time.Now()
 }
 
 func (s *session) CounterAddRpt() {

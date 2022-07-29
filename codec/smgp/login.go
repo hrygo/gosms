@@ -31,43 +31,11 @@ type Login struct {
 	secret string
 }
 
-func (l *Login) ClientID() string {
-	return l.clientID
-}
-
-func (l *Login) AuthenticatorClient() []byte {
-	return l.authenticatorClient
-}
-
-func (l *Login) LoginMode() byte {
-	return l.loginMode
-}
-
-func (l *Login) Timestamp() uint32 {
-	return l.timestamp
-}
-
-func (l *Login) Version() Version {
-	return l.version
-}
-
 type LoginRsp struct {
 	MessageHeader               // 协议头, 12字节
 	status              Status  // 状态码，4字节
 	authenticatorServer []byte  // 认证串，16字节
 	version             Version // 版本，1字节
-}
-
-func (r *LoginRsp) AuthenticatorServer() []byte {
-	return r.authenticatorServer
-}
-
-func (r *LoginRsp) Version() Version {
-	return r.version
-}
-
-func (r *LoginRsp) Status() Status {
-	return r.status
 }
 
 func NewLogin(cl *client.Client, seq uint32) *Login {
@@ -119,17 +87,17 @@ func (l *Login) String() string {
 		&l.MessageHeader, l.clientID, l.authenticatorClient, l.loginMode, l.timestamp, l.version)
 }
 
-func (l *Login) Check(cl *client.Client) Status {
+func (l *Login) Check(cli *client.Client) Status {
 	// 大版本不匹配
-	if !l.version.MajorMatch(cl.Version) {
+	if !l.version.MajorMatch(cli.Version) {
 		return Status(22)
 	}
 
 	authSource := l.authenticatorClient
 	authMd5 := md5.Sum(bytes.Join([][]byte{
-		[]byte(cl.ClientId),
-		make([]byte, 9),
-		[]byte(cl.SharedSecret),
+		[]byte(cli.ClientId),
+		make([]byte, 7),
+		[]byte(cli.SharedSecret),
 		[]byte(utils.TimeStamp2Str(l.timestamp)),
 	}, nil))
 	log.Debugf("[AuthCheck] input  : %x", authSource)
@@ -137,12 +105,12 @@ func (l *Login) Check(cl *client.Client) Status {
 	ok := bytes.Equal(authSource, authMd5[:])
 	// 配置不做校验或校验通过时返回0
 	if ok {
+		l.SetSecret(cli.SharedSecret)
 		return Status(0)
 	}
 	return Status(21)
 }
 
-// ToResponse 由Request生成Response，调用前需要SetSecret
 func (l *Login) ToResponse(code uint32) codec.Pdu {
 	rsp := &LoginRsp{}
 	rsp.PacketLength = LoginRespLen
@@ -217,4 +185,36 @@ func (r *LoginRsp) Log() []log.Field {
 		log.String("authenticatorISMG", hex.EncodeToString(r.authenticatorServer)),
 		log.String("version", hex.EncodeToString([]byte{byte(r.version)})),
 	)
+}
+
+func (l *Login) ClientID() string {
+	return l.clientID
+}
+
+func (l *Login) AuthenticatorClient() []byte {
+	return l.authenticatorClient
+}
+
+func (l *Login) LoginMode() byte {
+	return l.loginMode
+}
+
+func (l *Login) Timestamp() uint32 {
+	return l.timestamp
+}
+
+func (l *Login) Version() Version {
+	return l.version
+}
+
+func (r *LoginRsp) AuthenticatorServer() []byte {
+	return r.authenticatorServer
+}
+
+func (r *LoginRsp) Version() Version {
+	return r.version
+}
+
+func (r *LoginRsp) Status() Status {
+	return r.status
 }

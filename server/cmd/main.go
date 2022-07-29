@@ -21,6 +21,7 @@ func main() {
 	pprofDebug()
 
 	server.Start(server.New(server.CMPP))
+	server.Start(server.New(server.SMGP))
 
 	// 接收服务停止信号
 	<-bs.StatChan()

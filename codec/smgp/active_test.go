@@ -11,7 +11,7 @@ import (
 var _ = bootstrap.BasePath
 
 func TestActiveTest(t *testing.T) {
-	at := smgp.NewActiveTest()
+	at := smgp.NewActiveTest(uint32(codec.B32Seq.NextVal()))
 	t.Logf("%T : %s", at, at)
 
 	data := at.Encode()
