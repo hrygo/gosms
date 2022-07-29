@@ -151,8 +151,8 @@ func ToTPUDHISlices(content []byte, pkgLen int) (rt [][]byte) {
 	return rt
 }
 
-func RandNum(min, max int32) int {
-	return rand.Intn(int(max-min)) + int(min)
+func RandNum(min, max int) int {
+	return rand.Intn(max-min) + min
 }
 
 // DiceCheck 投概率骰子，得到结果比给定数字大则返回true，否则返回false

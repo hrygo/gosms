@@ -23,6 +23,12 @@ Server:
     MinSubmitRespMs: 1     # Mt响应的最小时间
     MaxSubmitRespMs: 3     # Mt响应的最大时间
     FixReportRespMs: 5     # 状态报告在fix-report-resp-ms后发送
+    Delivery: # 模拟上行短信配置
+      Enable: true
+      Contents:
+        - "0010_,_hello world" # 上行消息的子号码及内容用,用 "_,_" 分隔
+        - "0011_,_TD"
+        - "0012_,_你是个好人！"
 
 Client:
   StoreType: "yaml"               # 通过yaml文件来存储客户端配置信息，还支持mysql,postgresql等（计划）

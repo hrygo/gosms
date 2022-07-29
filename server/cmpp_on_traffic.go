@@ -61,12 +61,16 @@ func handlers() []TrafficHandler {
 		cmppConnect,
 		cmppSubmit,
 		cmppActive,
+		cmppActiveResp,
+		cmppTerminate,
+		cmppTerminateResp,
+		cmppDeliveryResp,
 	}
 }
 
 func mockRandPrecessTime() {
 	min := bootstrap.ConfigYml.GetInt("Server.Mock.MinSubmitRespMs")
 	max := bootstrap.ConfigYml.GetInt("Server.Mock.MaxSubmitRespMs")
-	rt := time.Duration(utils.RandNum(int32(min), int32(max)))
+	rt := time.Duration(utils.RandNum(min, max))
 	time.Sleep(rt * time.Millisecond)
 }

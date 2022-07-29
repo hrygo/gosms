@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/hrygo/log"
 	"github.com/panjf2000/gnet/v2"
@@ -10,8 +9,8 @@ import (
 	"github.com/hrygo/gosmsn/codec/cmpp"
 )
 
-var cmppActive TrafficHandler = func(cmd, seq uint32, buff []byte, c gnet.Conn, s *Server) (next bool, action gnet.Action) {
-	if uint32(cmpp.CMPP_ACTIVE_TEST) != cmd {
+var cmppDeliveryResp TrafficHandler = func(cmd, seq uint32, buff []byte, c gnet.Conn, s *Server) (next bool, action gnet.Action) {
+	if uint32(cmpp.CMPP_DELIVER_RESP) != cmd {
 		return true, gnet.None
 	}
 
@@ -20,7 +19,7 @@ var cmppActive TrafficHandler = func(cmd, seq uint32, buff []byte, c gnet.Conn, 
 		return false, gnet.Close
 	}
 
-	pdu := &cmpp.ActiveTest{}
+	pdu := &cmpp.DeliveryRsp{}
 	err := pdu.Decode(seq, buff)
 	if err != nil {
 		decodeErrorLog(sc, buff)
@@ -29,7 +28,7 @@ var cmppActive TrafficHandler = func(cmd, seq uint32, buff []byte, c gnet.Conn, 
 
 	// 异步处理，避免阻塞 event-loop
 	err = sc.Pool().Submit(func() {
-		handleCmppActive(s, sc, pdu)
+		handleCmppDeliveryResp(s, sc, pdu)
 	})
 	if err != nil {
 		log.Error(fmt.Sprintf("[%s] OnTraffic %s", sc.ServerName(), RC),
@@ -40,7 +39,7 @@ var cmppActive TrafficHandler = func(cmd, seq uint32, buff []byte, c gnet.Conn, 
 	return false, gnet.None
 }
 
-func handleCmppActive(s *Server, sc *session, pdu *cmpp.ActiveTest) {
+func handleCmppDeliveryResp(s *Server, sc *session, pdu *cmpp.DeliveryRsp) {
 	// 【会话级别流控】采用通道控制消息收发速度,向通道发送信号
 	sc.window <- struct{}{}
 	defer func() { <-sc.window }()
@@ -50,21 +49,5 @@ func handleCmppActive(s *Server, sc *session, pdu *cmpp.ActiveTest) {
 	// 打印报文
 	log.Debug(msg, FlatMapLog(sc.LogSession(), pdu.Log())...)
 
-	// n. 发送响应
-	resp := pdu.ToResponse(0)
-	pack := resp.Encode()
-	// 异步非阻塞
-	err := sc.conn.AsyncWrite(pack, func(c gnet.Conn) error {
-		_ = c.Flush()
-		msg = fmt.Sprintf("[%s] OnTraffic %s", s.name, SD)
-		log.Debug(msg, FlatMapLog(sc.LogSession(), resp.Log())...)
-		// 更新会话
-		sc.Lock()
-		defer sc.Unlock()
-		sc.lastUseTime = time.Now()
-		return nil
-	})
-	if err != nil {
-		log.Error(msg, FlatMapLog(sc.LogSession(), []log.Field{cmpp.CMPP_ACTIVE_TEST_RESP.Log(), SErrField(err.Error())})...)
-	}
+	// TODO more actions
 }
