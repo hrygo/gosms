@@ -22,4 +22,5 @@ type Client struct {
 	MaxConns        int           `yaml:"max-conns"`         // 最大连接数
 	MtWindowSize    int           `yaml:"mt-window-size"`    // 接收窗口大小,服务端分配
 	MtValidDuration time.Duration `yaml:"mt-valid-duration"` // 短信默认有效期，超过下面配置时长后，如果消息未发送，则不再发送
+	Throughput      int           `yaml:"throughput"`        // 系统最大吞吐,单位tps
 }

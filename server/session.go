@@ -8,6 +8,7 @@ import (
 	"github.com/panjf2000/ants/v2"
 	"github.com/panjf2000/gnet/v2"
 	"github.com/panjf2000/gnet/v2/pkg/pool/goroutine"
+	"golang.org/x/time/rate"
 
 	"github.com/hrygo/gosmsn/client"
 	"github.com/hrygo/gosmsn/codec"
@@ -28,6 +29,7 @@ type session struct {
 	counter                     // mt, dly, report 计数器
 	window      chan struct{}   // 流控所需通道，登录成功后需设置此值，否则消息不能正常收发
 	pool        *goroutine.Pool // 会话级别的线程池，登录成功后需设置此值，否则消息不能正常收发
+	limiter     *rate.Limiter   // 限速器
 }
 
 type counter struct {
@@ -67,8 +69,33 @@ func createSessionSidePool(size int) *goroutine.Pool {
 	return pool
 }
 
+func (s *session) completeLogin(cli *client.Client) {
+	// 设置会话信息及会话级别资源，此代码非常重要！！！
+	s.Lock()
+	defer s.Unlock()
+	s.stat = StatLogin
+	s.ver = cli.Version
+	s.clientId = cli.ClientId
+	s.lastUseTime = time.Now()
+	s.closeResource()
+	s.window = make(chan struct{}, cli.MtWindowSize)
+	s.pool = createSessionSidePool(cli.MtWindowSize * 2)
+	s.setupLimiter(cli)
+}
+
+func (s *session) setupLimiter(cli *client.Client) {
+	// 默认1W微妙即10毫秒生成一个token，也即tps最大200
+	ev := 10 * time.Millisecond
+	if cli != nil && cli.Throughput != 0 {
+		// 1s = 1000*1000 microsecond = 1000000 microsecond, Throughput 单位时TPS
+		ev = time.Duration(1000000/cli.Throughput) * time.Microsecond
+	}
+	limit := rate.Every(ev)
+	s.limiter = rate.NewLimiter(limit, cap(s.window))
+}
+
 // 关闭通道和线程池
-func (s *session) closePoolChan() {
+func (s *session) closeResource() {
 	if s == nil {
 		return
 	}
@@ -81,6 +108,7 @@ func (s *session) closePoolChan() {
 		s.pool.Release()
 		s.pool = nil
 	}
+	s.limiter = nil
 }
 
 func (s *session) Window() chan struct{} {
@@ -124,6 +152,10 @@ func (s *session) CreateTime() time.Time {
 
 func (s *session) LastUseTime() time.Time {
 	return s.lastUseTime
+}
+
+func (s *session) Limiter() *rate.Limiter {
+	return s.limiter
 }
 
 func (s *session) LogSession(size ...int) []log.Field {

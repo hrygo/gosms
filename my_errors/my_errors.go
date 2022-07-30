@@ -12,4 +12,5 @@ const (
 	ErrorsDecodePacketBody       = "Decode packet body error"
 	ErrorsIllegalPacketLength    = "Illegal packet length %d"
 	ErrorsIllegalCommand         = "Illegal command %0x"
+	ErrorsSubmitFlowControl      = "Submit message flow control"
 )

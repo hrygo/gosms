@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/hrygo/log"
 	"github.com/panjf2000/gnet/v2"
@@ -61,16 +60,7 @@ func handleSmgpLogin(s *Server, sc *session, login *smgp.Login) {
 	pack := resp.Encode()
 	err := sc.conn.AsyncWrite(pack, func(c gnet.Conn) error {
 		if code == smgp.Status(0) {
-			// 设置会话信息及会话级别资源，此代码非常重要！！！
-			sc.Lock()
-			defer sc.Unlock()
-			sc.stat = StatLogin
-			sc.ver = byte(login.Version())
-			sc.clientId = cli.ClientId
-			sc.lastUseTime = time.Now()
-			sc.closePoolChan()
-			sc.window = make(chan struct{}, cli.MtWindowSize)
-			sc.pool = createSessionSidePool(cli.MtWindowSize * 2)
+			sc.completeLogin(cli)
 			// 更新会话
 			s.SessionPool().Store(sc.id, sc)
 		} else {

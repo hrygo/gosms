@@ -24,7 +24,7 @@ func (s *Server) OnClose(c gnet.Conn, e error) (action gnet.Action) {
 }
 
 func deferFunc(c gnet.Conn, s *Server, sc *session) {
-	sc.closePoolChan() // 关闭通道，释放线程池
+	sc.closeResource() // 关闭通道，释放线程池
 	s.sessionPool.Delete(sc.Id())
 	s.activeSessions -= 1
 	c.SetContext(nil)

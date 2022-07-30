@@ -32,6 +32,12 @@ var smgpSubmit TrafficHandler = func(cmd, seq uint32, buff []byte, c gnet.Conn, 
 		decodeErrorLog(sc, buff)
 		return false, gnet.Close
 	}
+
+	pass := submitFlowControl(sc, mt, 1)
+	if !pass {
+		return false, gnet.None
+	}
+
 	// 异步处理，避免阻塞 event-loop
 	// 使用会话级别的 GoPool, 这样不同会话之间的资源相对独立
 	err = sc.Pool().Submit(func() {
@@ -69,19 +75,10 @@ func handleSmgpSubmit(s *Server, sc *session, mt *smgp.Submit) {
 	}
 	// ...
 	// n. 发送响应
-	resp := mt.ToResponse(result)
-	pack := resp.Encode()
-	// 异步非阻塞
-	err = sc.conn.AsyncWrite(pack, func(c gnet.Conn) error {
-		_ = c.Flush()
-		// 更新mt计数器
-		sc.CounterAddMt()
-		msg = fmt.Sprintf("[%s] OnTraffic %s", s.name, SD)
-		log.Debug(msg, FlatMapLog(sc.LogSession(16), resp.Log())...)
-		return nil
-	})
+	resp, err := sendSubmitResponse(sc, mt, result)
 	if err != nil {
 		log.Error(msg, FlatMapLog(sc.LogSession(), []log.Field{smgp.SMGP_SUBMIT_RESP.OpLog(), SErrField(err.Error())})...)
+		return
 	}
 	// n+1. SMSC异步发送消息
 	// ...

@@ -31,6 +31,12 @@ var cmppSubmit TrafficHandler = func(cmd, seq uint32, buff []byte, c gnet.Conn, 
 		decodeErrorLog(sc, buff)
 		return false, gnet.Close
 	}
+
+	pass := submitFlowControl(sc, mt, 8)
+	if !pass {
+		return false, gnet.None
+	}
+
 	// 异步处理，避免阻塞 event-loop
 	// 使用会话级别的 GoPool, 这样不同会话之间的资源相对独立
 	err = sc.Pool().Submit(func() {
@@ -56,7 +62,7 @@ func handleCmppSubmit(s *Server, sc *session, mt *cmpp.Submit) {
 	log.Debug(msg, FlatMapLog(sc.LogSession(32), mt.Log())...)
 
 	// 1. 包检查
-	result, err := cmppSubmitPacketCheck(sc, mt)
+	result, _ := cmppSubmitPacketCheck(sc, mt)
 	// 2. 消息签名处理、长短信处理等等
 	// 3. 计费检查及计费
 	// ...
@@ -68,19 +74,10 @@ func handleCmppSubmit(s *Server, sc *session, mt *cmpp.Submit) {
 	}
 	// ...
 	// n. 发送响应
-	resp := mt.ToResponse(result)
-	pack := resp.Encode()
-	// 异步非阻塞
-	err = sc.conn.AsyncWrite(pack, func(c gnet.Conn) error {
-		_ = c.Flush()
-		// 更新mt计数器
-		sc.CounterAddMt()
-		msg = fmt.Sprintf("[%s] OnTraffic %s", s.name, SD)
-		log.Debug(msg, FlatMapLog(sc.LogSession(16), resp.Log())...)
-		return nil
-	})
+	resp, err := sendSubmitResponse(sc, mt, result)
 	if err != nil {
-		log.Error(msg, FlatMapLog(sc.LogSession(), []log.Field{cmpp.CMPP_SUBMIT_RESP.OpLog(), SErrField(err.Error())})...)
+		log.Error(msg, FlatMapLog(sc.LogSession(), []log.Field{cmpp.CMPP_SUBMIT.OpLog(), SErrField(err.Error())})...)
+		return
 	}
 	// n+1. SMSC异步发送消息
 	// ...

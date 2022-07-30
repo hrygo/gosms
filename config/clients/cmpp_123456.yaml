@@ -12,6 +12,7 @@ fee-type: 05                      # 费用相关
 fee-code: free                    # 费用相关
 fixed-fee:                        # 费用相关
 link-id:                          # 点播业务相关
-max-conns: 4                      # 最大连接数
-mt-window-size: 16                # 接收窗口大小,服务端分配
 mt-valid-duration: 2h             # 短信默认有效期，超过下面配置时长后，如果消息未发送，则不再发送
+max-conns: 4                      # 最大连接数
+mt-window-size: 16                # 接收窗口大小, 服务端分配, 用于限制未得到响应的消息的最大数量
+throughput: 100                   # 最大吞吐, 单位tps, 服务端分配, 用于限制系统吞吐

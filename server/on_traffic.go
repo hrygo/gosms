@@ -105,6 +105,38 @@ func DecodeAndCheckHeader(s *Server, c gnet.Conn) (cmd uint32, seq uint32, buff 
 	return cmd, seq, newBuff, gnet.None, true
 }
 
+// 流量控制检查，如果检查不通过返回客户端 errCode 指定的错误码
+func submitFlowControl(sc *session, mt codec.RequestPdu, errCode uint32) bool {
+	// 限速检查
+	ok := sc.limiter.Allow()
+	if !ok {
+		//  流量控制错误响应结果异步发送
+		_ = sc.Pool().Submit(func() {
+			_, _ = sendSubmitResponse(sc, mt, errCode)
+		})
+		msg := fmt.Sprintf("[%s] OnTraffic %s", sc.ServerName(), RC)
+		log.Warn(msg, FlatMapLog(sc.LogSession(), []log.Field{SErrField(my_errors.ErrorsSubmitFlowControl)})...)
+	}
+	return ok
+}
+
+// 发送下行短信响应
+func sendSubmitResponse(sc *session, pdu codec.RequestPdu, result uint32) (codec.Pdu, error) {
+	msg := fmt.Sprintf("[%s] OnTraffic %s", sc.ServerName(), SD)
+	resp := pdu.ToResponse(result)
+	pack := resp.Encode()
+	// 异步非阻塞
+	err := sc.conn.AsyncWrite(pack, func(c gnet.Conn) error {
+		_ = c.Flush()
+		if result == 0 {
+			sc.CounterAddMt()
+		}
+		log.Debug(msg, FlatMapLog(sc.LogSession(16), resp.Log())...)
+		return nil
+	})
+	return resp, err
+}
+
 func sessionCheck(s *session) bool {
 	if s.stat != StatLogin {
 		log.Error(fmt.Sprintf("[%s] OnTraffic %s", s.ServerName(), RC),
