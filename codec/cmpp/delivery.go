@@ -7,7 +7,7 @@ import (
 
 	"github.com/hrygo/log"
 
-	"github.com/hrygo/gosmsn/client"
+	"github.com/hrygo/gosmsn/auth"
 	"github.com/hrygo/gosmsn/codec"
 	"github.com/hrygo/gosmsn/utils"
 )
@@ -34,7 +34,7 @@ type Delivery struct {
 	Version Version
 }
 
-func NewDelivery(cli *client.Client, phone, msg, dest, serviceId string, seq uint32) codec.RequestPdu {
+func NewDelivery(cli *auth.Client, phone, msg, dest, serviceId string, seq uint32) codec.RequestPdu {
 	dly := &Delivery{Version: Version(cli.Version)}
 	dly.CommandId = CMPP_DELIVER
 	dly.SequenceId = seq

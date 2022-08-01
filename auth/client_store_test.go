@@ -1,4 +1,4 @@
-package client_test
+package auth_test
 
 import (
 	"testing"
@@ -6,11 +6,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 
-	"github.com/hrygo/gosmsn/client"
+	"github.com/hrygo/gosmsn/auth"
 )
 
 func TestYamlStore_FindByCid(t *testing.T) {
-	c := client.Cache.FindByCid("CMPP", "123456")
+	c := auth.Cache.FindByCid("CMPP", "123456")
 	assert.True(t, c != nil)
 	t.Logf("%#+v", c)
 

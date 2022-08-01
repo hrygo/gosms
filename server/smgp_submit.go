@@ -8,8 +8,8 @@ import (
 	"github.com/hrygo/log"
 	"github.com/panjf2000/gnet/v2"
 
+	"github.com/hrygo/gosmsn/auth"
 	"github.com/hrygo/gosmsn/bootstrap"
-	"github.com/hrygo/gosmsn/client"
 	"github.com/hrygo/gosmsn/codec"
 	"github.com/hrygo/gosmsn/codec/smgp"
 	"github.com/hrygo/gosmsn/utils"
@@ -92,7 +92,7 @@ func handleSmgpSubmit(s *Server, sc *session, mt *smgp.Submit) {
 // 协议包检查，并根据检查情况给result赋值
 func smgpSubmitPacketCheck(s *session, mt *smgp.Submit) (result uint32, err error) {
 	// 获取客户端信息
-	cli := client.Cache.FindByCid(s.serverName, s.clientId)
+	cli := auth.Cache.FindByCid(s.serverName, s.clientId)
 	check := strings.HasPrefix(mt.SrcTermID(), cli.SmsDisplayNo)
 	if check {
 		check = mt.Priority() < 4
@@ -109,7 +109,7 @@ func mockSendSmgpReport(sc *session, sub *smgp.Submit, msgId []byte) {
 	}
 	msg := fmt.Sprintf("[%s] OnTraffic %s", sc.serverName, SD)
 
-	cli := client.Cache.FindByCid(sc.serverName, sc.clientId)
+	cli := auth.Cache.FindByCid(sc.serverName, sc.clientId)
 	dly := smgp.NewDeliveryReport(cli, sub, uint32(codec.B32Seq.NextVal()), msgId)
 	// 模拟状态报告发送前的耗时
 	ms := bootstrap.ConfigYml.GetInt("Server.Mock.FixReportRespMs")

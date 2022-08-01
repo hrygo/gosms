@@ -6,7 +6,7 @@ import (
 	"github.com/hrygo/log"
 	"github.com/panjf2000/gnet/v2"
 
-	"github.com/hrygo/gosmsn/client"
+	"github.com/hrygo/gosmsn/auth"
 	"github.com/hrygo/gosmsn/codec/cmpp"
 )
 
@@ -43,7 +43,7 @@ func handleCmppConnect(s *Server, sc *session, login *cmpp.Connect) {
 	log.Info(msg, FlatMapLog(sc.LogSession(16), login.Log())...)
 
 	// 获取客户端信息
-	cli := client.Cache.FindByCid(s.name, login.SourceAddr())
+	cli := auth.Cache.FindByCid(s.name, login.SourceAddr())
 	code := login.Check(cli)
 
 	// 检查当前已登录会话数是否已达上限

@@ -8,8 +8,8 @@ import (
 	"github.com/hrygo/log"
 	"github.com/panjf2000/gnet/v2"
 
+	"github.com/hrygo/gosmsn/auth"
 	"github.com/hrygo/gosmsn/bootstrap"
-	"github.com/hrygo/gosmsn/client"
 	"github.com/hrygo/gosmsn/codec/cmpp"
 	"github.com/hrygo/gosmsn/utils"
 )
@@ -91,7 +91,7 @@ func handleCmppSubmit(s *Server, sc *session, mt *cmpp.Submit) {
 // 协议包检查，并根据检查情况给result赋值
 func cmppSubmitPacketCheck(s *session, mt *cmpp.Submit) (result uint32, err error) {
 	// 获取客户端信息
-	cli := client.Cache.FindByCid(s.serverName, s.clientId)
+	cli := auth.Cache.FindByCid(s.serverName, s.clientId)
 	check := strings.HasPrefix(mt.SrcId(), cli.SmsDisplayNo)
 	if check {
 		check = mt.MsgLevel() < 10

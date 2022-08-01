@@ -125,7 +125,7 @@ var StatMap = map[uint32]string{
 	21: "认证错",
 	22: "版本太高",
 	30: "非法消息类型（MsgType）",
-	31: "非法优先级（Priority）",
+	31: "非法优先级（LruPriority）",
 	32: "非法资费类型（FeeType）",
 	33: "非法资费代码（FeeCode）",
 	34: "非法短消息格式（MsgFormat）",

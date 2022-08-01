@@ -9,7 +9,7 @@ import (
 
 	"github.com/hrygo/log"
 
-	"github.com/hrygo/gosmsn/client"
+	"github.com/hrygo/gosmsn/auth"
 	"github.com/hrygo/gosmsn/codec"
 	"github.com/hrygo/gosmsn/utils"
 )
@@ -42,7 +42,7 @@ type DeliverRsp struct {
 	Version Version
 }
 
-func NewDeliver(cli *client.Client, phone string, destNo string, txt string, seq uint32) codec.RequestPdu {
+func NewDeliver(cli *auth.Client, phone string, destNo string, txt string, seq uint32) codec.RequestPdu {
 	baseLen := uint32(89)
 	dlv := &Deliver{Version: Version(cli.Version)}
 	dlv.RequestId = SMGP_DELIVER
@@ -69,7 +69,7 @@ func NewDeliver(cli *client.Client, phone string, destNo string, txt string, seq
 	return dlv
 }
 
-func NewDeliveryReport(cli *client.Client, mt *Submit, seq uint32, msgId []byte) *Deliver {
+func NewDeliveryReport(cli *auth.Client, mt *Submit, seq uint32, msgId []byte) *Deliver {
 	baseLen := uint32(89)
 	dlv := &Deliver{Version: Version(cli.Version)}
 	dlv.RequestId = SMGP_DELIVER

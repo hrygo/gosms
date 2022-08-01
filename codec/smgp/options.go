@@ -3,7 +3,7 @@ package smgp
 import (
 	"time"
 
-	"github.com/hrygo/gosmsn/client"
+	"github.com/hrygo/gosmsn/auth"
 	"github.com/hrygo/gosmsn/utils"
 )
 
@@ -16,7 +16,7 @@ type MtOptions struct {
 	SrcTermID     string        // 会拼接到配置文件的sms-display-no后面
 }
 
-func (s *Submit) SetOptions(cli *client.Client, options MtOptions) {
+func (s *Submit) SetOptions(cli *auth.Client, options MtOptions) {
 	s.needReport = byte(cli.NeedReport)
 	// 有点小bug，不能通过传参的方式设置未变量的"零值"
 	if options.NeedReport != 0 {

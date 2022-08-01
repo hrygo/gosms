@@ -9,7 +9,7 @@ import (
 
 	"github.com/hrygo/log"
 
-	"github.com/hrygo/gosmsn/client"
+	"github.com/hrygo/gosmsn/auth"
 	"github.com/hrygo/gosmsn/codec"
 	"github.com/hrygo/gosmsn/utils"
 )
@@ -51,7 +51,7 @@ type Submit struct {
 	Version Version
 }
 
-func NewSubmit(cli *client.Client, phones []string, content string, seq uint32, opts ...Option) (messages []codec.RequestPdu) {
+func NewSubmit(cli *auth.Client, phones []string, content string, seq uint32, opts ...Option) (messages []codec.RequestPdu) {
 	options := loadOptions(opts...)
 	baseLen := 138
 	if V30.MajorMatch(cli.Version) {
@@ -532,7 +532,7 @@ func (r *SubmitRsp) Result() uint32 {
 }
 
 // 设置可选项
-func setOptions(cli *client.Client, sub *Submit, opts *MtOptions) {
+func setOptions(cli *auth.Client, sub *Submit, opts *MtOptions) {
 	if opts.FeeUsertype != uint8(0xf) {
 		sub.feeUsertype = opts.FeeUsertype
 	} else {

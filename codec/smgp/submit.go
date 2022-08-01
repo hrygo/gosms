@@ -9,7 +9,7 @@ import (
 
 	"github.com/hrygo/log"
 
-	"github.com/hrygo/gosmsn/client"
+	"github.com/hrygo/gosmsn/auth"
 	"github.com/hrygo/gosmsn/codec"
 	"github.com/hrygo/gosmsn/utils"
 )
@@ -51,7 +51,7 @@ type SubmitRsp struct {
 
 const MtBaseLen = 126
 
-func NewSubmit(cli *client.Client, phones []string, content string, seq uint32, options MtOptions) (messages []codec.RequestPdu) {
+func NewSubmit(cli *auth.Client, phones []string, content string, seq uint32, options MtOptions) (messages []codec.RequestPdu) {
 	mt := &Submit{Version: Version(cli.Version)}
 	mt.PacketLength = MtBaseLen
 	mt.RequestId = SMGP_SUBMIT
@@ -215,7 +215,7 @@ func (s *Submit) String() string {
 	if s.msgLength > 6 {
 		bts = s.msgBytes[:6]
 	}
-	return fmt.Sprintf("{ header: %s, msgType: %v, NeedReport: %v, Priority: %v, ServiceID: %v, "+
+	return fmt.Sprintf("{ header: %s, msgType: %v, NeedReport: %v, LruPriority: %v, ServiceID: %v, "+
 		"feeType: %v, feeCode: %v, fixedFee: %v, msgFormat: %v, validTime: %v, AtTime: %v, SrcTermID: %v, "+
 		"chargeTermID: %v, destTermIDCount: %v, destTermID: %v, msgLength: %v, msgContent: %#x..., "+
 		"reserve: %v, tlvList: %s }",

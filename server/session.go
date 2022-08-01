@@ -10,7 +10,7 @@ import (
 	"github.com/panjf2000/gnet/v2/pkg/pool/goroutine"
 	"golang.org/x/time/rate"
 
-	"github.com/hrygo/gosmsn/client"
+	"github.com/hrygo/gosmsn/auth"
 	"github.com/hrygo/gosmsn/codec"
 )
 
@@ -18,18 +18,18 @@ import (
 type session struct {
 	sync.Mutex
 	id          uint64
-	createTime  time.Time
 	conn        gnet.Conn
 	clientId    string          // 客户端识别号，由服务端分配
 	serverName  string          // 连接的Server的name
 	ver         byte            // 协议版本号
 	stat        stat            // 会话状态
 	nAt         byte            // 未接收到响应的心跳次数
+	createTime  time.Time       // 创建时间
 	lastUseTime time.Time       // 接收到客户端的 active/active_resp 或 mt 消息会更新该时间
-	counter                     // mt, dly, report 计数器
 	window      chan struct{}   // 流控所需通道，登录成功后需设置此值，否则消息不能正常收发
 	pool        *goroutine.Pool // 会话级别的线程池，登录成功后需设置此值，否则消息不能正常收发
 	limiter     *rate.Limiter   // 限速器
+	counter                     // mt, dly, report 计数器
 }
 
 type counter struct {
@@ -69,7 +69,7 @@ func createSessionSidePool(size int) *goroutine.Pool {
 	return pool
 }
 
-func (s *session) completeLogin(cli *client.Client) {
+func (s *session) completeLogin(cli *auth.Client) {
 	// 设置会话信息及会话级别资源，此代码非常重要！！！
 	s.Lock()
 	defer s.Unlock()
@@ -83,7 +83,7 @@ func (s *session) completeLogin(cli *client.Client) {
 	s.setupLimiter(cli)
 }
 
-func (s *session) setupLimiter(cli *client.Client) {
+func (s *session) setupLimiter(cli *auth.Client) {
 	// 默认1W微妙即10毫秒生成一个token，也即tps最大200
 	ev := 10 * time.Millisecond
 	if cli != nil && cli.Throughput != 0 {
@@ -188,9 +188,9 @@ func (s *session) LogCounter() []log.Field {
 	if s != nil {
 		mt, dlv, rpt = s.counter.mt, s.counter.dly, s.counter.report
 	}
-	cli := client.Cache.FindByCid(s.serverName, s.clientId)
+	cli := auth.Cache.FindByCid(s.serverName, s.clientId)
 	if cli == nil {
-		cli = &client.Client{}
+		cli = &auth.Client{}
 	}
 
 	// 防止未登录而未初始化pool时的空指针异常。

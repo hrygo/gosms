@@ -7,11 +7,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/hrygo/gosmsn/client"
+	"github.com/hrygo/gosmsn/auth"
 	"github.com/hrygo/gosmsn/codec"
 )
 
-var cli = client.Cache.FindByCid("smgp", "12345678")
+var cli = auth.Cache.FindByCid("smgp", "12345678")
 
 func TestNewSubmit(t *testing.T) {
 	subs := NewSubmit(cli, []string{"17600001111", "17700001111"}, Poem, uint32(codec.B32Seq.NextVal()), MtOptions{AtTime: time.Now().Add(time.Minute)})

@@ -6,7 +6,7 @@ import (
 	"github.com/hrygo/log"
 	"github.com/panjf2000/gnet/v2"
 
-	"github.com/hrygo/gosmsn/client"
+	"github.com/hrygo/gosmsn/auth"
 	"github.com/hrygo/gosmsn/codec/smgp"
 )
 
@@ -43,7 +43,7 @@ func handleSmgpLogin(s *Server, sc *session, login *smgp.Login) {
 	log.Info(msg, FlatMapLog(sc.LogSession(16), login.Log())...)
 
 	// 获取客户端信息
-	cli := client.Cache.FindByCid(s.name, login.ClientID())
+	cli := auth.Cache.FindByCid(s.name, login.ClientID())
 	code := login.Check(cli)
 
 	// 检查当前已登录会话数是否已达上限

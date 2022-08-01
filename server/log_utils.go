@@ -9,7 +9,7 @@ import (
 const (
 	Sid                   = "sid"    // 会话标识
 	SrvName               = "server" // 会话标识
-	CliName               = "client" // 会话标识
+	CliName               = "auth"   // 会话标识
 	RemoteAddr            = "remote" // 发起方地址
 	LogKeyErr             = "error"  // 错误信息
 	LogKeyPacket          = "packet" // 数据包

@@ -8,8 +8,8 @@ import (
 	"github.com/hrygo/log"
 	"github.com/panjf2000/gnet/v2"
 
+	"github.com/hrygo/gosmsn/auth"
 	bs "github.com/hrygo/gosmsn/bootstrap"
-	"github.com/hrygo/gosmsn/client"
 	"github.com/hrygo/gosmsn/codec"
 	"github.com/hrygo/gosmsn/codec/cmpp"
 	"github.com/hrygo/gosmsn/codec/smgp"
@@ -112,7 +112,7 @@ func mockDelivery(s *Server, sc *session) {
 	if !open {
 		return
 	}
-	cli := client.Cache.FindByCid(s.name, sc.clientId)
+	cli := auth.Cache.FindByCid(s.name, sc.clientId)
 	if cli == nil {
 		return
 	}

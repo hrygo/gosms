@@ -5,13 +5,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/hrygo/gosmsn/auth"
 	"github.com/hrygo/gosmsn/bootstrap"
-	"github.com/hrygo/gosmsn/client"
 	"github.com/hrygo/gosmsn/codec"
 )
 
 var _ = bootstrap.BasePath
-var cli = client.Cache.FindByCid("cmpp", "123456")
+var cli = auth.Cache.FindByCid("cmpp", "123456")
 
 func TestCmppConnect_Encode(t *testing.T) {
 	connect := NewConnect(cli, uint32(codec.B32Seq.NextVal()))

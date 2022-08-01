@@ -1,4 +1,4 @@
-package client
+package auth
 
 import (
 	"io/ioutil"
@@ -30,7 +30,7 @@ type storage struct {
 }
 
 func init() {
-	st := bs.ConfigYml.GetString("Client.StoreType")
+	st := bs.ConfigYml.GetString("AuthClient.StoreType")
 	if "" == st || "yaml" == st || "yml" == st {
 		Cache = &YamlStore{cache: make(map[string]*Client)}
 	}
@@ -44,7 +44,7 @@ func init() {
 
 func startTicker(s Store) {
 	go func(s Store) {
-		d := bs.ConfigYml.GetDuration("client.ReloadTicker")
+		d := bs.ConfigYml.GetDuration("AuthClient.ReloadTicker")
 		if d == 0 {
 			log.Warn("Client.ReloadTicker configuration missing, ticker not started.")
 			return
@@ -54,7 +54,7 @@ func startTicker(s Store) {
 
 		for {
 			<-ticker.C
-			log.Warn("client cache reload.")
+			log.Warn("auth cache reload.")
 			s.Load()
 		}
 	}(s)
@@ -66,7 +66,7 @@ func startTicker(s Store) {
 type YamlStore storage
 
 func (y *YamlStore) Load() {
-	dir := bs.ConfigYml.GetString("Client.YamlFilePath")
+	dir := bs.ConfigYml.GetString("AuthClient.YamlFilePath")
 	if "" == dir {
 		dir = "config/clients/"
 	}
