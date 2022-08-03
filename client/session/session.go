@@ -59,24 +59,6 @@ func NewSession(isp string, cli *auth.Client, con net.Conn) *Session {
 	return sc
 }
 
-func (s *Session) HealthCheck() bool {
-	ok := s != nil && s.stat == StatLogin && s.con != nil && s.cli != nil && s.cancel != nil
-
-	// 活跃状态为1分钟前，则发送心跳验证
-	if ok && s.activeTime.Add(time.Minute).Before(time.Now()) {
-		err := s.ActiveTest()
-		if err != nil {
-			return false
-		}
-	}
-	return ok
-}
-
-func (s *Session) ActiveTest() error {
-	// TODO  通过心跳验证连接是否正常
-	return nil
-}
-
 func (s *Session) ResetCounter() {
 	s.periodCounter = 0
 }
@@ -123,21 +105,75 @@ func (s *Session) Close() {
 // startReceiver 启动接收服务
 func (s *Session) startReceiver() {
 	go func() {
+		// 无限循环接收
 		for {
+			// 获取取消信号，如果通道阻塞则执行正常业务逻辑，否则取消循环，停止当前goroutine
 			select {
 			case <-s.cancel:
-				log.Warn("Receive cancel signal, Receiver exit!")
+				log.Warnf("[%s] Receive cancel signal, Receiver exit!", s.serverName)
 				return
 			default:
-				if !s.HealthCheck() {
-					log.Warn("Session status incorrect, Receiver exit!")
-					return
+				{
+					if !s.HealthCheck() {
+						log.Warnf("[%s] Session status incorrect, Receiver exit!", s.serverName)
+						return
+					}
+					head := make([]byte, 12)
+					n, err := s.con.Read(head)
+					if n != 12 || err != nil {
+						log.Errorf("[%s] Read Packet Head error: %v. Session closing...", s.serverName, err)
+						s.Close()
+						return
+					}
+					log.Debugf("[%s] Read Packet Head: %x", s.serverName, head)
+					pkl, cmd, seq := codec.UnpackHead(head)
+					// 报文长度检查
+					if pkl > codec.PacketMax || pkl < codec.HeadLen {
+						log.Errorf("[%s] Read Packet Length(%d) abnormal, Session closing...", s.serverName, pkl)
+						s.Close()
+						return
+					}
+					// 其他方面，客户端，弱化了报文合法性检查，后续不合法报文将直接丢弃
+
+					var buff []byte
+					var bodyLen = int(pkl) - 12
+					if bodyLen > 0 {
+						buff = make([]byte, bodyLen)
+						n, err = s.con.Read(buff)
+						if n != bodyLen || err != nil {
+							log.Errorf("[%s] Read Packet Body error: %v. Session closing...", s.serverName, err)
+							s.Close()
+							return
+						}
+					}
+					log.Debugf("[%s] Read Packet Body: %x", s.serverName, buff)
+					go s.onTraffic(cmd, seq, buff)
 				}
-				// TODO receive
-				time.Sleep(time.Millisecond)
 			}
 		}
+		// 结束无限循环
 	}()
+}
+
+func (s *Session) onTraffic(cmd, seq uint32, buff []byte) {
+	switch s.serverName {
+	case CMPP:
+		s.onTrafficCmpp(cmd, seq, buff)
+	case SMGP:
+		s.onTrafficSmgp(cmd, seq, buff)
+	case SGIP:
+		s.onTrafficSgip(cmd, seq, buff)
+	}
+}
+
+func (s *Session) onTrafficCmpp(cmd, seq uint32, buff []byte) {
+	s.activeTime = time.Now()
+}
+func (s *Session) onTrafficSgip(cmd, seq uint32, buff []byte) {
+	s.activeTime = time.Now()
+}
+func (s *Session) onTrafficSmgp(cmd, seq uint32, buff []byte) {
+	s.activeTime = time.Now()
 }
 
 func (s *Session) login() error {
@@ -167,7 +203,7 @@ func (s *Session) login() error {
 	if err != nil {
 		return err
 	}
-	log.Info(fmt.Sprintf("Send login to %v.", s.con.RemoteAddr()), pdu.Log()...)
+	log.Info(fmt.Sprintf("[%s] Send login to %v.", s.serverName, s.con.RemoteAddr()), pdu.Log()...)
 
 	data := make([]byte, respLen)
 	n, err := s.con.Read(data[:])
@@ -177,7 +213,7 @@ func (s *Session) login() error {
 
 	var pkl = binary.BigEndian.Uint32(data[:4])
 	if pkl != uint32(n) {
-		return errors.New(fmt.Sprintf("packet length error: expect %d, got %d", n, pkl))
+		return errors.New(fmt.Sprintf("[%s] Packet length error: expect %d, got %d", s.serverName, n, pkl))
 	}
 	var cmd = binary.BigEndian.Uint32(data[4:8])
 	var seq = binary.BigEndian.Uint32(data[8:12])
@@ -189,7 +225,7 @@ func (s *Session) login() error {
 	case CMPP:
 		{
 			if cmd != uint32(cmpp.CMPP_CONNECT_RESP) {
-				return errors.New(fmt.Sprintf("CommandId error: expect %x, got %x", cmpp.CMPP_CONNECT_RESP, cmd))
+				return errors.New(fmt.Sprintf("[%s] CommandId error: expect %x, got %x", s.serverName, cmpp.CMPP_CONNECT_RESP, cmd))
 			}
 			resp := &cmpp.ConnectResp{Version: cmpp.Version(s.cli.Version)}
 			err := resp.Decode(seq, data[12:])
@@ -197,14 +233,14 @@ func (s *Session) login() error {
 				return err
 			}
 			if resp.Status() != cmpp.ConnStatusOK {
-				return errors.New(fmt.Sprintf("Login error with return \"%s\"", resp.Status().String()))
+				return errors.New(fmt.Sprintf("[%s] Login error with return \"%s\"", s.serverName, resp.Status().String()))
 			}
-			log.Info("Login result", resp.Log()...)
+			log.Info(fmt.Sprintf("[%s] Login result", s.serverName), resp.Log()...)
 		}
 	case SMGP:
 		{
 			if cmd != uint32(smgp.SMGP_LOGIN_RESP) {
-				return errors.New(fmt.Sprintf("CommandId error: expect %x, got %x", smgp.SMGP_LOGIN_RESP, cmd))
+				return errors.New(fmt.Sprintf("[%s] CommandId error: expect %x, got %x", s.serverName, smgp.SMGP_LOGIN_RESP, cmd))
 			}
 			resp := &smgp.LoginRsp{Version: smgp.Version(s.cli.Version)}
 			err := resp.Decode(seq, data[12:])
@@ -212,12 +248,48 @@ func (s *Session) login() error {
 				return err
 			}
 			if resp.Status() != smgp.Status(0) {
-				return errors.New(fmt.Sprintf("Login error with return \"%s\"", resp.Status().String()))
+				return errors.New(fmt.Sprintf("[%s] Login error with return \"%s\"", s.serverName, resp.Status().String()))
 			}
-			log.Info("Login result", resp.Log()...)
+			log.Info(fmt.Sprintf("[%s] Login result", s.serverName), resp.Log()...)
 		}
 	}
 	s.stat = StatLogin
 	s.activeTime = time.Now()
+	return nil
+}
+
+func (s *Session) HealthCheck() bool {
+	ok := s != nil && s.stat == StatLogin && s.con != nil && s.cli != nil && s.cancel != nil
+
+	// 活跃状态为1分钟前，则发送心跳验证
+	if ok && s.activeTime.Add(time.Minute).Before(time.Now()) {
+		err := s.ActiveTest()
+		if err != nil {
+			return false
+		}
+	}
+	return ok
+}
+
+func (s *Session) ActiveTest() error {
+	msg := fmt.Sprintf("[%s] ActiveTest", s.serverName)
+	var active codec.RequestPdu
+	var seq = uint32(codec.B32Seq.NextVal())
+	switch s.serverName {
+	case CMPP:
+		active = cmpp.NewActiveTest(seq)
+	case SGIP:
+		// active =
+	case SMGP:
+		active = smgp.NewActiveTest(seq)
+	}
+	pack := active.Encode()
+	_, err := s.con.Write(pack)
+	if err == nil {
+		log.Info(msg, active.Log()...)
+	} else {
+		log.Error(msg + err.Error())
+		return nil
+	}
 	return nil
 }

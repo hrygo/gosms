@@ -57,8 +57,33 @@ func (s *Snowflake) NextVal() int32 {
 	return r
 }
 
+func Parse(seq int32) *Snowflake {
+	sf := Snowflake{}
+	sf.seconds = seq >> timestampShift
+	sf.datacenter = (seq >> datacenterShift) & 0x03
+	sf.worker = (seq >> workerShift) & 0x07
+	sf.sequence = seq & 0x01ff
+	return &sf
+}
+
 func (s *Snowflake) String() string {
-	return fmt.Sprintf("%d:%d:%d:%d", s.seconds, s.datacenter, s.worker, s.sequence)
+	return fmt.Sprintf("%08x", (s.seconds<<timestampShift)|(s.datacenter<<datacenterShift)|(s.worker<<workerShift)|(s.sequence))
+}
+
+func (s *Snowflake) Seconds() int32 {
+	return s.seconds
+}
+
+func (s *Snowflake) Datacenter() int32 {
+	return s.datacenter
+}
+
+func (s *Snowflake) Worker() int32 {
+	return s.worker
+}
+
+func (s *Snowflake) Sequence() int32 {
+	return s.sequence
 }
 
 func passedSeconds() int32 {

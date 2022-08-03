@@ -17,8 +17,6 @@ import (
 func TestSessionFactory(t *testing.T) {
 	pprofDebug()
 
-	var door = make(chan struct{})
-
 	var fa = sms.CreateSessionFactory("CMPP")
 	var fa1 = sms.CreateSessionFactory("CMPP")
 	assert.True(t, fa != nil)
@@ -41,7 +39,18 @@ func TestSessionFactory(t *testing.T) {
 	sc.Close()
 	sc2.Close()
 
-	<-door
+	time.Sleep(3600 * time.Second)
+}
+
+func TestPanic(t *testing.T) {
+	defer func() {
+		err := recover()
+		assert.True(t, err != nil)
+	}()
+
+	var fa = sms.CreateSessionFactory("ABCD")
+	assert.True(t, fa != nil)
+
 }
 
 // 开启pprof，监听请求
@@ -55,4 +64,10 @@ func pprofDebug() {
 			}
 		}()
 	}
+}
+
+func TestSelectSession(t *testing.T) {
+	session := sms.SelectSession("13800001111")
+
+	assert.True(t, session != nil)
 }

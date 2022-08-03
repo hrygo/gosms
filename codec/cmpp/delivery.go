@@ -40,6 +40,7 @@ func NewDelivery(cli *auth.Client, phone, msg, dest, serviceId string, seq uint3
 	dly.SequenceId = seq
 	dly.srcTerminalId = phone
 	dly.srcTerminalType = 0
+	dly.msgId = uint64(codec.B64Seq.NextVal())
 	setMsgContent(dly, msg)
 
 	if dest != "" {

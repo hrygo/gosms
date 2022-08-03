@@ -37,7 +37,7 @@ AuthClient:
 
 Snowflake: # 类雪花算法序号生成器配置
   B64:
-    DC: 0         # 2bits 0-3
+    DC: 0         # 3bits 0-7
     Worker: 127   # 7bits 0-127
   B32:
     DC: 0         # 2bits 0-3

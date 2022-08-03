@@ -1,16 +1,17 @@
 package snowflake
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
-	"github.com/panjf2000/gnet/v2/pkg/logging"
+	"github.com/hrygo/log"
 )
 
 const (
 	epoch           = int64(1577808000000)                       // 设置起始时间(时间戳/毫秒)：2020-01-01 00:00:00，有效期69年
 	timestampBits   = uint(41)                                   // 时间戳占用位数
-	datacenterBits  = uint(2)                                    // 数据中心id所占位数
+	datacenterBits  = uint(3)                                    // 数据中心id所占位数
 	workerBits      = uint(7)                                    // 机器id所占位数
 	sequenceBits    = uint(12)                                   // 序列所占的位数
 	timestampMax    = int64(-1 ^ (-1 << timestampBits))          // 时间戳最大值
@@ -19,8 +20,6 @@ const (
 	datacenterShift = sequenceBits + workerBits                  // 数据中心id左移位数
 	timestampShift  = sequenceBits + workerBits + datacenterBits // 时间戳左移位数
 )
-
-var log = logging.GetDefaultLogger()
 
 type Snowflake struct {
 	sync.Mutex         // 锁
@@ -60,4 +59,33 @@ func (s *Snowflake) NextVal() int64 {
 	s.timestamp = now
 	r := (t << timestampShift) | (s.datacenterId << datacenterShift) | (s.workerId << workerShift) | (s.sequence)
 	return r
+}
+
+func (s *Snowflake) String() string {
+	return fmt.Sprintf("%016x", ((s.timestamp-epoch)<<timestampShift)|(s.datacenterId<<datacenterShift)|(s.workerId<<workerShift)|(s.sequence))
+}
+
+func (s *Snowflake) Timestamp() int64 {
+	return s.timestamp
+}
+
+func (s *Snowflake) WorkerId() int64 {
+	return s.workerId
+}
+
+func (s *Snowflake) DatacenterId() int64 {
+	return s.datacenterId
+}
+
+func (s *Snowflake) Sequence() int64 {
+	return s.sequence
+}
+
+func Parse(seq int64) *Snowflake {
+	sf := Snowflake{}
+	sf.timestamp = (seq >> timestampShift) + epoch    // 41 bits
+	sf.datacenterId = (seq >> datacenterShift) & 0x07 // 3 bits
+	sf.workerId = (seq >> workerShift) & 0x7f         // 7 bits
+	sf.sequence = seq & 0x0fff                        // 12 bits
+	return &sf
 }

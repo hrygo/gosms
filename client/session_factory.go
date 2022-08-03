@@ -18,7 +18,7 @@ import (
 )
 
 var smsConf yaml_config.YmlConfig
-var factories sync.Map
+var factories [3]*SessionFactory
 
 type SessionFactory struct {
 	sync.Mutex
@@ -36,17 +36,36 @@ func init() {
 	smsConf.ConfigFileChangeListen()
 }
 
+// SelectSession 根据手机号码选择一个会话
+func SelectSession(phone string) *session.Session {
+	var fa *SessionFactory
+	for i, factory := range factories {
+		if factory == nil {
+			factory = CreateSessionFactory(ISPS[i])
+			factories[i] = factory
+		}
+		if factory.regex.MatchString(phone) {
+			fa = factory
+			break
+		}
+	}
+	if fa == nil {
+		return nil
+	}
+	return fa.PeekSession()
+}
+
 // CreateSessionFactory 创建或获取由isp指定的factory，isp需与sms.yml配置文件对应，否则会引起程序崩溃
 func CreateSessionFactory(isp string) *SessionFactory {
 	isp = strings.ToLower(isp)
-	saved, ok := factories.Load(isp)
-	if ok && saved != nil {
-		return saved.(*SessionFactory)
+	saved := factories[ISP(isp).Int()]
+	if saved != nil {
+		return saved
 	}
 
 	cli := auth.Cache.FindByCid(isp, smsConf.GetString(isp+".client-id"))
 	if cli == nil {
-		log.Fatalf("isp= %s, clientId= %s not found!", isp, smsConf.GetString(isp+".  clientId"))
+		log.Fatalf("isp=%s, clientId=%s not found!", isp, smsConf.GetString(isp+".client-id"))
 	}
 
 	factory := &SessionFactory{srvName: isp, cli: cli}
@@ -67,7 +86,7 @@ func CreateSessionFactory(isp string) *SessionFactory {
 		log.Fatal(err.Error())
 	}
 
-	maxConns := smsConf.GetInt(isp + ".max-maxConns")
+	maxConns := smsConf.GetInt(isp + ".max-conns")
 	if maxConns > 0 {
 		factory.sessions = make([]*session.Session, 0, maxConns)
 	} else {
@@ -103,7 +122,7 @@ func CreateSessionFactory(isp string) *SessionFactory {
 	factory.limiter = rate.NewLimiter(limit, cap(factory.window))
 	factory.startTicker()
 
-	factories.Store(isp, factory)
+	factories[ISP(isp).Int()] = factory
 	return factory
 }
 
@@ -198,4 +217,21 @@ func (f *SessionFactory) newConnect() {
 	} else {
 		log.Error(err.Error())
 	}
+}
+
+type ISP string
+
+var ISPS = [3]string{"cmpp", "sgip", "smgp"}
+
+func (i ISP) Int() int {
+	switch i {
+	case "cmpp":
+		return 0
+	case "sgip":
+		return 2
+	case "smgp":
+		return 2
+	}
+	log.Panicf("ISP \"%s\" not found!", i)
+	return -1
 }
