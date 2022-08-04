@@ -152,6 +152,7 @@ func (d *Delivery) ToResponse(code uint32) codec.Pdu {
 		dr.TotalLength = codec.HeadLen + 12
 	}
 	dr.CommandId = CMPP_DELIVER_RESP
+	dr.SequenceId = d.SequenceId
 	dr.msgId = d.msgId
 	dr.result = DlyResult(code)
 

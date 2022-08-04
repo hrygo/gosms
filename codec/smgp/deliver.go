@@ -14,7 +14,7 @@ import (
 	"github.com/hrygo/gosmsn/utils"
 )
 
-type Deliver struct {
+type Delivery struct {
 	MessageHeader
 	msgId      []byte         // 【10字节】短消息流水号
 	isReport   byte           // 【1字节】是否为状态报告
@@ -44,7 +44,7 @@ type DeliverRsp struct {
 
 func NewDeliver(cli *auth.Client, phone string, destNo string, txt string, seq uint32) codec.RequestPdu {
 	baseLen := uint32(89)
-	dlv := &Deliver{Version: Version(cli.Version)}
+	dlv := &Delivery{Version: Version(cli.Version)}
 	dlv.RequestId = SMGP_DELIVER
 	dlv.SequenceId = seq
 	dlv.msgId = codec.BcdSeq.NextVal()
@@ -69,9 +69,9 @@ func NewDeliver(cli *auth.Client, phone string, destNo string, txt string, seq u
 	return dlv
 }
 
-func NewDeliveryReport(cli *auth.Client, mt *Submit, seq uint32, msgId []byte) *Deliver {
+func NewDeliveryReport(cli *auth.Client, mt *Submit, seq uint32, msgId []byte) *Delivery {
 	baseLen := uint32(89)
-	dlv := &Deliver{Version: Version(cli.Version)}
+	dlv := &Delivery{Version: Version(cli.Version)}
 	dlv.RequestId = SMGP_DELIVER
 	dlv.SequenceId = seq
 	dlv.msgId = codec.BcdSeq.NextVal()
@@ -86,7 +86,7 @@ func NewDeliveryReport(cli *auth.Client, mt *Submit, seq uint32, msgId []byte) *
 	return dlv
 }
 
-func (d *Deliver) Encode() []byte {
+func (d *Delivery) Encode() []byte {
 	frame := d.MessageHeader.Encode()
 	index := 12
 	copy(frame[index:index+10], d.msgId)
@@ -109,7 +109,7 @@ func (d *Deliver) Encode() []byte {
 	return frame
 }
 
-func (d *Deliver) Decode(seq uint32, frame []byte) error {
+func (d *Delivery) Decode(seq uint32, frame []byte) error {
 	d.PacketLength = codec.HeadLen + uint32(len(frame))
 	d.RequestId = SMGP_DELIVER
 	d.SequenceId = seq
@@ -145,7 +145,7 @@ func (d *Deliver) Decode(seq uint32, frame []byte) error {
 	return nil
 }
 
-func (d *Deliver) ToResponse(code uint32) codec.Pdu {
+func (d *Delivery) ToResponse(code uint32) codec.Pdu {
 	resp := &DeliverRsp{Version: d.Version}
 	resp.RequestId = SMGP_DELIVER_RESP
 	resp.PacketLength = 26
@@ -155,7 +155,7 @@ func (d *Deliver) ToResponse(code uint32) codec.Pdu {
 	return resp
 }
 
-func (d *Deliver) String() string {
+func (d *Delivery) String() string {
 	content := ""
 	if d.IsReport() {
 		content = d.report.String()
@@ -171,7 +171,7 @@ func (d *Deliver) String() string {
 	)
 }
 
-func (d *Deliver) Log() []log.Field {
+func (d *Delivery) Log() []log.Field {
 	ls := d.MessageHeader.Log()
 	ls = append(ls,
 		log.String("version", hex.EncodeToString([]byte{byte(d.Version)})),
@@ -199,7 +199,7 @@ func (d *Deliver) Log() []log.Field {
 	return append(ls, csl)
 }
 
-func (d *Deliver) IsReport() bool {
+func (d *Delivery) IsReport() bool {
 	return d.isReport == 1
 }
 
@@ -239,47 +239,47 @@ func (r *DeliverRsp) MsgId() string {
 	return fmt.Sprintf("%x", r.msgId)
 }
 
-func (d *Deliver) MsgId() []byte {
+func (d *Delivery) MsgId() []byte {
 	return d.msgId
 }
 
-func (d *Deliver) MsgFormat() byte {
+func (d *Delivery) MsgFormat() byte {
 	return d.msgFormat
 }
 
-func (d *Deliver) RecvTime() string {
+func (d *Delivery) RecvTime() string {
 	return d.recvTime
 }
 
-func (d *Deliver) SrcTermID() string {
+func (d *Delivery) SrcTermID() string {
 	return d.srcTermID
 }
 
-func (d *Deliver) DestTermID() string {
+func (d *Delivery) DestTermID() string {
 	return d.destTermID
 }
 
-func (d *Deliver) MsgLength() byte {
+func (d *Delivery) MsgLength() byte {
 	return d.msgLength
 }
 
-func (d *Deliver) MsgContent() string {
+func (d *Delivery) MsgContent() string {
 	return d.msgContent
 }
 
-func (d *Deliver) MsgBytes() []byte {
+func (d *Delivery) MsgBytes() []byte {
 	return d.msgBytes
 }
 
-func (d *Deliver) Report() *Report {
+func (d *Delivery) Report() *Report {
 	return d.report
 }
 
-func (d *Deliver) Reserve() string {
+func (d *Delivery) Reserve() string {
 	return d.reserve
 }
 
-func (d *Deliver) TlvList() *utils.TlvList {
+func (d *Delivery) TlvList() *utils.TlvList {
 	return d.tlvList
 }
 

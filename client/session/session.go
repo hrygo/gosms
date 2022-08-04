@@ -166,16 +166,6 @@ func (s *Session) onTraffic(cmd, seq uint32, buff []byte) {
 	}
 }
 
-func (s *Session) onTrafficCmpp(cmd, seq uint32, buff []byte) {
-	s.activeTime = time.Now()
-}
-func (s *Session) onTrafficSgip(cmd, seq uint32, buff []byte) {
-	s.activeTime = time.Now()
-}
-func (s *Session) onTrafficSmgp(cmd, seq uint32, buff []byte) {
-	s.activeTime = time.Now()
-}
-
 func (s *Session) login() error {
 	var pdu codec.Pdu
 	var respLen = 27

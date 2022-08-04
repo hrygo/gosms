@@ -25,7 +25,7 @@ func TestDeliver_ReportDecode(t *testing.T) {
 }
 
 func testDeliver(t *testing.T, pdu codec.RequestPdu) {
-	dlv := pdu.(*Deliver)
+	dlv := pdu.(*Delivery)
 	resp := dlv.ToResponse(0).(*DeliverRsp)
 	t.Logf("resp: %s", resp)
 
@@ -34,7 +34,7 @@ func testDeliver(t *testing.T, pdu codec.RequestPdu) {
 	assert.True(t, int(dlv.PacketLength) == len(dt))
 	t.Logf("dlv_encode: %x", dt)
 	// 测试Deliver Decode
-	dlvDec := &Deliver{}
+	dlvDec := &Delivery{}
 	err := dlvDec.Decode(dlv.SequenceId, dt[12:])
 	assert.True(t, err == nil)
 	assert.True(t, dlvDec.MessageHeader.SequenceId == dlv.MessageHeader.SequenceId)
