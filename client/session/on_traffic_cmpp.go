@@ -6,8 +6,29 @@ import (
 
 	"github.com/hrygo/log"
 
+	"github.com/hrygo/gosmsn/codec"
 	"github.com/hrygo/gosmsn/codec/cmpp"
+	"github.com/hrygo/gosmsn/utils"
 )
+
+func (s *Session) sendByCmpp(phone string, message string) (results []*Result) {
+	mts := cmpp.NewSubmit(s.cli, []string{phone}, message, uint32(codec.B32Seq.NextVal()))
+	for _, mt := range mts {
+		_, err := s.con.Write(mt.Encode())
+		if err != nil {
+			log.Error(err.Error())
+			s.Close()
+			return nil
+		}
+		mtt := mt.(*cmpp.Submit)
+		r := Result{SendTime: time.Now()}
+		r.RequestId = mtt.SequenceId
+		r.Phone = phone
+		results = append(results, &r)
+		RequestIdResultCacheMap.Store(r.RequestId, &r)
+	}
+	return
+}
 
 func (s *Session) onTrafficCmpp(cmd, seq uint32, buff []byte) {
 	s.activeTime = time.Now()
@@ -59,6 +80,15 @@ func (s *Session) onTrafficCmpp(cmd, seq uint32, buff []byte) {
 			log.Error(err.Error())
 			s.Close()
 		}
+		result, ok := RequestIdResultCacheMap.Load(sub.SequenceId)
+		if ok {
+			mtr := result.(*Result)
+			mtr.Result = sub.Result()
+			mtr.MsgId = utils.Uint64HexString(sub.MsgId())
+			mtr.ResponseTime = time.Now()
+			// 已msgId为Key存储到内存缓存
+			MsgIdResultCacheMap.Store(mtr.MsgId, mtr)
+		}
 	case cmpp.CMPP_DELIVER:
 		dly := &cmpp.Delivery{Version: cmpp.Version(s.cli.Version)}
 		err := dly.Decode(seq, buff)
@@ -74,6 +104,20 @@ func (s *Session) onTrafficCmpp(cmd, seq uint32, buff []byte) {
 		if err != nil {
 			log.Error(err.Error())
 			s.Close()
+		}
+		// 是状态报告
+		if dly.IsReport() {
+			rpt := dly.Report()
+			if rpt == nil {
+				return
+			}
+			key := utils.Uint64HexString(rpt.MsgId())
+			val, ok := MsgIdResultCacheMap.Load(key)
+			if ok {
+				mtr := val.(*Result)
+				mtr.Report = rpt.Stat()
+				mtr.ReportTime = time.Now()
+			}
 		}
 	}
 }

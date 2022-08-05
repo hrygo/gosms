@@ -172,6 +172,7 @@ func (s *Session) login() error {
 	switch s.serverName {
 	case SGIP:
 		{
+			return nil
 		}
 	case CMPP:
 		{

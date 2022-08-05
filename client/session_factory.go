@@ -10,15 +10,44 @@ import (
 
 	"github.com/hrygo/log"
 	"github.com/hrygo/yaml_config"
+	"github.com/panjf2000/ants/v2"
+	"github.com/panjf2000/gnet/v2/pkg/pool/goroutine"
 	"golang.org/x/time/rate"
 
 	"github.com/hrygo/gosmsn/auth"
 	"github.com/hrygo/gosmsn/bootstrap"
 	"github.com/hrygo/gosmsn/client/session"
+	"github.com/hrygo/gosmsn/event_manage"
 )
 
 var smsConf yaml_config.YmlConfig
 var factories [3]*SessionFactory
+
+// resultQueryCacheMap 临时存储短信发送的返回结果数据，Key为queryId,value为[]*Result，后续采用数据库存储
+var resultQueryCacheMap sync.Map
+var pool *goroutine.Pool
+
+func init() {
+	smsConf = yaml_config.CreateYamlFactory("config", "sms", bootstrap.ProjectName)
+	smsConf.ConfigFileChangeListen()
+
+	poolSize := smsConf.GetInt("cache.handler-pool-size")
+	if poolSize < 10 {
+		poolSize = 10
+	}
+	var options = ants.Options{
+		ExpiryDuration: time.Minute, // 1 分钟内不被使用的worker会被清除
+		Nonblocking:    false,       // 如果为true,worker池满了后提交任务会直接返回nil
+		PreAlloc:       false,
+		PanicHandler: func(e interface{}) {
+			log.Errorf("%v", e)
+		},
+	}
+	pool, _ = ants.NewPool(poolSize, ants.WithOptions(options))
+	event_manage.CreateEventManage(bootstrap.ShutdownEventPrefix).Register("cache_pool", func(args ...any) {
+		pool.Release()
+	})
+}
 
 type SessionFactory struct {
 	sync.Mutex
@@ -29,11 +58,6 @@ type SessionFactory struct {
 	window     chan struct{}
 	limiter    *rate.Limiter
 	regex      *regexp.Regexp
-}
-
-func init() {
-	smsConf = yaml_config.CreateYamlFactory("config", "sms", bootstrap.ProjectName)
-	smsConf.ConfigFileChangeListen()
 }
 
 // SelectSession 根据手机号码选择一个会话
@@ -120,7 +144,7 @@ func CreateSessionFactory(isp string) *SessionFactory {
 	}
 	limit := rate.Every(ev)
 	factory.limiter = rate.NewLimiter(limit, cap(factory.window))
-	factory.startTicker()
+	factory.startLruSortTicker()
 
 	factories[ISP(isp).Int()] = factory
 	return factory
@@ -142,7 +166,100 @@ func (f *SessionFactory) PeekSession() *session.Session {
 	return ret
 }
 
-func (f *SessionFactory) startTicker() {
+// StartCacheExpireTicker 过期数据定期检查器
+func StartCacheExpireTicker(expireHandler func([]*session.Result)) {
+	go func() {
+		d := smsConf.GetDuration("cache.expire-check-duration")
+		if d == 0 {
+			d = time.Second
+		}
+		ticker := time.NewTicker(d)
+		defer ticker.Stop()
+
+		for {
+			<-ticker.C
+			// 1. 查询缓存的过期清晰与持久化
+			cleanQueryCacheMap(expireHandler)
+
+			// 2. 请求响应缓存的清理
+			cleanRequestIdCacheMap()
+
+			// 3. 状态报告缓存清理
+			cleanMsgIdCacheMap()
+		}
+	}()
+}
+
+func cleanQueryCacheMap(expireHandler func([]*session.Result)) {
+	expired := make([]int64, 0, 16)
+	resultQueryCacheMap.Range(func(key, value any) bool {
+		id := key.(int64)
+		results := value.([]*session.Result)
+		// 这里过期时间不需精准，我们只判断每个切片的第一个元素是否已经过程，如果过期，就整个切片删除
+		if len(results) == 0 {
+			expired = append(expired, id)
+		} else {
+			d := smsConf.GetDuration("cache.expire-time")
+			if d == 0 {
+				d = time.Minute
+			}
+			if results[0].SendTime.Add(d).Before(time.Now()) {
+				expired = append(expired, id)
+				// 如果过期处理器不为空，异步处理结果数据
+				if expireHandler != nil {
+					_ = pool.Submit(func() {
+						expireHandler(results)
+					})
+				}
+			}
+		}
+		return true
+	})
+	for _, key := range expired {
+		key := key
+		resultQueryCacheMap.Delete(key)
+	}
+}
+
+func cleanRequestIdCacheMap() {
+	expiredKeys := make([]uint32, 0, 32)
+	session.RequestIdResultCacheMap.Range(func(key, value any) bool {
+		d := smsConf.GetDuration("cache.expire-time")
+		if d == 0 {
+			d = time.Minute
+		}
+		result := value.(*session.Result)
+		if result.SendTime.Add(d).Before(time.Now()) {
+			expiredKeys = append(expiredKeys, result.RequestId)
+		}
+		return true
+	})
+	for _, key := range expiredKeys {
+		key := key
+		session.RequestIdResultCacheMap.Delete(key)
+	}
+}
+
+func cleanMsgIdCacheMap() {
+	expiredKeys := make([]string, 0, 32)
+	session.MsgIdResultCacheMap.Range(func(key, value any) bool {
+		d := smsConf.GetDuration("cache.expire-time")
+		if d == 0 {
+			d = time.Minute
+		}
+		result := value.(*session.Result)
+		if result.SendTime.Add(d).Before(time.Now()) {
+			expiredKeys = append(expiredKeys, result.MsgId)
+		}
+		return true
+	})
+	for _, key := range expiredKeys {
+		key := key
+		session.MsgIdResultCacheMap.Delete(key)
+	}
+}
+
+func (f *SessionFactory) startLruSortTicker() {
 	go func() {
 		d := smsConf.GetDuration(f.srvName + ".tick-duration")
 		if d == 0 {
@@ -153,12 +270,12 @@ func (f *SessionFactory) startTicker() {
 
 		for {
 			<-ticker.C
-			f.onTick()
+			f.lruSort()
 		}
 	}()
 }
 
-func (f *SessionFactory) onTick() {
+func (f *SessionFactory) lruSort() {
 	maxConns := smsConf.GetInt(f.srvName + ".max-conns")
 	var newSlice []*session.Session
 	if maxConns <= 0 {
@@ -182,6 +299,7 @@ func (f *SessionFactory) onTick() {
 
 	for len(f.sessions) < maxConns {
 		f.newConnect()
+		//  使用固定间隔创建会话,避免瞬时创建太多
 		time.Sleep(time.Second)
 	}
 }
@@ -221,15 +339,15 @@ func (f *SessionFactory) newConnect() {
 
 type ISP string
 
-var ISPS = [3]string{"cmpp", "sgip", "smgp"}
+var ISPS = [3]string{session.CMPP, session.SGIP, session.SMGP}
 
 func (i ISP) Int() int {
 	switch i {
-	case "cmpp":
+	case session.CMPP:
 		return 0
-	case "sgip":
-		return 2
-	case "smgp":
+	case session.SGIP:
+		return 1
+	case session.SMGP:
 		return 2
 	}
 	log.Panicf("ISP \"%s\" not found!", i)

@@ -22,6 +22,7 @@ func main() {
 
 	server.Start(server.New(server.CMPP))
 	server.Start(server.New(server.SMGP))
+	server.Start(server.New(server.SGIP))
 
 	// 接收服务停止信号
 	<-bs.StatChan()

@@ -72,3 +72,27 @@ func (rt *Report) Decode(frame []byte) error {
 	rt.smscSequence = binary.BigEndian.Uint32(frame[56:60])
 	return nil
 }
+
+func (rt *Report) MsgId() uint64 {
+	return rt.msgId
+}
+
+func (rt *Report) Stat() string {
+	return rt.stat
+}
+
+func (rt *Report) SubmitTime() string {
+	return rt.submitTime
+}
+
+func (rt *Report) DoneTime() string {
+	return rt.doneTime
+}
+
+func (rt *Report) DestTerminalId() string {
+	return rt.destTerminalId
+}
+
+func (rt *Report) SmscSequence() uint32 {
+	return rt.smscSequence
+}

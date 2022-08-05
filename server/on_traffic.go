@@ -11,6 +11,7 @@ import (
 	"github.com/hrygo/gosmsn/bootstrap"
 	"github.com/hrygo/gosmsn/codec"
 	"github.com/hrygo/gosmsn/codec/cmpp"
+	"github.com/hrygo/gosmsn/codec/sgip"
 	"github.com/hrygo/gosmsn/codec/smgp"
 	"github.com/hrygo/gosmsn/my_errors"
 	"github.com/hrygo/gosmsn/utils"
@@ -76,7 +77,7 @@ func DecodeAndCheckHeader(s *Server, c gnet.Conn) (cmd uint32, seq uint32, buff 
 	case CMPP:
 		op = cmpp.CommandId(cmd)
 	case SGIP:
-		// op = sgip.CommandId(cmd)
+		op = sgip.CommandId(cmd)
 	case SMGP:
 		op = smgp.CommandId(cmd)
 	}

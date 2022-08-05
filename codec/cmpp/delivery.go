@@ -183,8 +183,8 @@ func setMsgContent(dly *Delivery, msg string) {
 	dly.msgContent = msg
 }
 
-func (d *Delivery) RegisteredDelivery() uint8 {
-	return d.registeredDelivery
+func (d *Delivery) IsReport() bool {
+	return d.registeredDelivery == 1
 }
 
 func (d *Delivery) Log() []log.Field {
@@ -215,6 +215,54 @@ func (d *Delivery) Log() []log.Field {
 		csl = log.String("msgContent", hex.EncodeToString(bs[:l])+"...")
 	}
 	return append(ls, csl)
+}
+
+func (d *Delivery) MsgId() uint64 {
+	return d.msgId
+}
+
+func (d *Delivery) DestId() string {
+	return d.destId
+}
+
+func (d *Delivery) ServiceId() string {
+	return d.serviceId
+}
+
+func (d *Delivery) TpPid() uint8 {
+	return d.tpPid
+}
+
+func (d *Delivery) TpUdhi() uint8 {
+	return d.tpUdhi
+}
+
+func (d *Delivery) MsgFmt() uint8 {
+	return d.msgFmt
+}
+
+func (d *Delivery) SrcTerminalId() string {
+	return d.srcTerminalId
+}
+
+func (d *Delivery) SrcTerminalType() uint8 {
+	return d.srcTerminalType
+}
+
+func (d *Delivery) MsgLength() uint8 {
+	return d.msgLength
+}
+
+func (d *Delivery) MsgContent() string {
+	return d.msgContent
+}
+
+func (d *Delivery) Report() *Report {
+	return d.report
+}
+
+func (d *Delivery) LinkID() string {
+	return d.linkID
 }
 
 type DeliveryRsp struct {

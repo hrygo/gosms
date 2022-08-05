@@ -112,6 +112,30 @@ func (rt *Report) Decode(frame []byte) error {
 	return nil
 }
 
+func (rt *Report) Id() []byte {
+	return rt.id
+}
+
+func (rt *Report) Sub() string {
+	return rt.sub
+}
+
+func (rt *Report) Dlvrd() string {
+	return rt.dlvrd
+}
+
+func (rt *Report) SubmitDate() string {
+	return rt.submitDate
+}
+
+func (rt *Report) DoneDate() string {
+	return rt.doneDate
+}
+
+func (rt *Report) Stat() string {
+	return rt.stat
+}
+
 var reportStatMap = map[string]string{
 	"000": "DELIVRD", // 成功
 	"001": "EXPIRED", // 用户不能通信

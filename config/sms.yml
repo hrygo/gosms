@@ -1,3 +1,8 @@
+cache:
+  expire-time: 10s             # 缓存在内存存储的过期时间
+  expire-check-duration: 1s    # 缓存过期检查间隔
+  handler-pool-size: 100       # 缓存过期检查间隔
+
 # 移动
 cmpp:
   client-id: "123456"
@@ -6,7 +11,7 @@ cmpp:
   max-conns: 4                      # 最大连接数
   mt-window-size: 16                # 接收窗口大小, 服务端分配, 用于限制未得到响应的消息的最大数量
   throughput: 1000                  # 最大吞吐, 单位tps, 服务端分配, 用于限制系统吞吐
-  tick-duration: 1s                # 定时器调度间隔
+  tick-duration: 1s                 # 定时器调度间隔
 
 # 联通
 sgip:

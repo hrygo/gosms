@@ -10,7 +10,7 @@ import (
 )
 
 // Event 事件为无返回值的任意函数
-type Event = func(args ...interface{})
+type Event = func(args ...any)
 
 // 定义一个全局事件存储变量，本模块只负责存储 键 => 函数
 var sMap sync.Map
