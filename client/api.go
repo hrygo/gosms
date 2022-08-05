@@ -1,6 +1,8 @@
 package sms
 
 import (
+	"time"
+
 	"github.com/hrygo/gosmsn/client/session"
 	"github.com/hrygo/gosmsn/codec"
 )
@@ -16,9 +18,12 @@ func Send(message string, phones ...string) (queryId int64) {
 	for _, phone := range phones {
 		phone := phone
 		sc := SelectSession(phone)
-		if sc != nil {
-			results = append(results, sc.Send(phone, message)...)
+		for sc == nil {
+			time.Sleep(time.Millisecond)
+			sc = SelectSession(phone)
 		}
+		results = append(results, sc.Send(phone, message)...)
+		sc.AddCounter()
 	}
 	saveQueryCache(queryId, results)
 	return

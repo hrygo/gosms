@@ -5,9 +5,12 @@
 从源码构建并启动
 
 ```bash
-go build -trimpath -o gosmsn ./cmd/server/gosmsn.go 
+make linux
+# make darwin 
 
-./gosmsn
+cd publish
+ 
+./start.sh
 ```
 
 ## 功能及原理说明

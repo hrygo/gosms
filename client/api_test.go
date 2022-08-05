@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/hrygo/log"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/hrygo/gosmsn/bootstrap"
 	sms "github.com/hrygo/gosmsn/client"
@@ -25,12 +26,14 @@ func init() {
 func TestSend(t *testing.T) {
 	i := 100
 	for i > 0 {
-		sms.Send("hello world", "13800001111")
+		queryId := sms.Send("hello world", "13800001111")
+		assert.True(t, len(sms.Query(queryId)) > 0)
 		i--
 	}
 	i = 100
 	for i > 0 {
-		sms.Send("hello world", "13300001111")
+		queryId := sms.Send("hello world", "13300001111")
+		assert.True(t, len(sms.Query(queryId)) > 0)
 		i--
 	}
 	time.Sleep(time.Minute)

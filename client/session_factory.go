@@ -152,6 +152,10 @@ func CreateSessionFactory(isp string) *SessionFactory {
 
 // PeekSession 获取排序后在头部的会话（最近最少使用的会话）
 func (f *SessionFactory) PeekSession() *session.Session {
+	if !f.limiter.Allow() {
+		return nil
+	}
+
 	if len(f.sessions) > 0 && f.sessions[0] == nil && f.sessions[0].HealthCheck() {
 		return f.sessions[0]
 	}
@@ -192,10 +196,10 @@ func StartCacheExpireTicker(expireHandler func([]*session.Result)) {
 
 func cleanQueryCacheMap(expireHandler func([]*session.Result)) {
 	expired := make([]int64, 0, 16)
+	batch := make([]*session.Result, 0, 128)
 	resultQueryCacheMap.Range(func(key, value any) bool {
 		id := key.(int64)
 		results := value.([]*session.Result)
-		// 这里过期时间不需精准，我们只判断每个切片的第一个元素是否已经过程，如果过期，就整个切片删除
 		if len(results) == 0 {
 			expired = append(expired, id)
 		} else {
@@ -203,21 +207,30 @@ func cleanQueryCacheMap(expireHandler func([]*session.Result)) {
 			if d == 0 {
 				d = time.Minute
 			}
+			// 这里过期时间不需精准，我们只判断每个切片的第一个元素是否已经过程，如果过期，就整个切片删除
 			if results[0].SendTime.Add(d).Before(time.Now()) {
 				expired = append(expired, id)
-				// 如果过期处理器不为空，异步处理结果数据
-				if expireHandler != nil {
-					_ = pool.Submit(func() {
-						expireHandler(results)
-					})
-				}
+				batch = append(batch, results...)
 			}
+		}
+		// 如果过期处理器不为空，异步处理结果数据
+		if expireHandler != nil && len(batch) >= 64 {
+			_ = pool.Submit(func() {
+				expireHandler(batch)
+			})
+			batch = make([]*session.Result, 0, 128)
 		}
 		return true
 	})
 	for _, key := range expired {
 		key := key
 		resultQueryCacheMap.Delete(key)
+	}
+	// 如果过期处理器不为空，异步处理结果数据
+	if expireHandler != nil && len(batch) > 0 {
+		_ = pool.Submit(func() {
+			expireHandler(batch)
+		})
 	}
 }
 
