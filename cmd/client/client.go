@@ -14,7 +14,9 @@ import (
 
 func main() {
 	// 启动记录数据库的程序
-	sms.PersistenceSmsJournal()
+	if sms.Conf.GetString("Mongo.URI") != "" {
+		sms.PersistenceSmsJournal()
+	}
 
 	phone := flag.String("p", "13800001111", "phone")
 	message := flag.String("m", "hello world", "message")
@@ -33,7 +35,7 @@ func main() {
 	var x, k = 0, 10
 	for x > 0 || k > 0 {
 		x = 0
-		session.RequestIdResultCacheMap.Range(func(key, value any) bool {
+		session.SequenceIdResultCacheMap.Range(func(key, value any) bool {
 			x++
 			return true
 		})

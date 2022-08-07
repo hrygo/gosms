@@ -237,20 +237,20 @@ func cleanQueryCacheMap(asyncHandler func([]any)) {
 
 func cleanRequestIdCacheMap() {
 	expiredKeys := make([]uint32, 0, 32)
-	session.RequestIdResultCacheMap.Range(func(key, value any) bool {
+	session.SequenceIdResultCacheMap.Range(func(key, value any) bool {
 		d := Conf.GetDuration("cache.expire-time")
 		if d == 0 {
 			d = time.Minute
 		}
 		result := value.(*session.Result)
 		if result.SendTime.Add(d).Before(time.Now()) {
-			expiredKeys = append(expiredKeys, result.RequestId)
+			expiredKeys = append(expiredKeys, result.SequenceId)
 		}
 		return true
 	})
 	for _, key := range expiredKeys {
 		key := key
-		session.RequestIdResultCacheMap.Delete(key)
+		session.SequenceIdResultCacheMap.Delete(key)
 	}
 }
 

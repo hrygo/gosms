@@ -1,5 +1,5 @@
 cache:
-  expire-time: 60s             # 缓存在内存存储的过期时间
+  expire-time: 10s             # 缓存在内存存储的过期时间
   expire-check-duration: 1s    # 缓存过期检查间隔
   handler-pool-size: 100       # 缓存过期检查间隔
 

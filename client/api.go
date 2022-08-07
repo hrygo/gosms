@@ -48,6 +48,10 @@ func Query(queryId int64) []any {
 }
 
 func saveQueryCache(key int64, value []any) {
+	for _, a := range value {
+		r := a.(*session.Result)
+		r.QueryId = key
+	}
 	resultQueryCacheMap.Store(key, value)
 }
 

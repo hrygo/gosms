@@ -25,10 +25,10 @@ func (s *Session) sendByCmpp(phone string, message string) (results []any) {
 		log.Debug(send, mtt.Log()...)
 
 		r := Result{SendTime: time.Now()}
-		r.RequestId = mtt.SequenceId
+		r.SequenceId = mtt.SequenceId
 		r.Phone = phone
 		results = append(results, &r)
-		RequestIdResultCacheMap.Store(r.RequestId, &r)
+		SequenceIdResultCacheMap.Store(r.SequenceId, &r)
 	}
 	return
 }
@@ -83,7 +83,7 @@ func (s *Session) onTrafficCmpp(cmd, seq uint32, buff []byte) {
 			log.Error(err.Error())
 			s.Close()
 		}
-		result, ok := RequestIdResultCacheMap.Load(sub.SequenceId)
+		result, ok := SequenceIdResultCacheMap.Load(sub.SequenceId)
 		if ok {
 			mtr := result.(*Result)
 			mtr.Result = sub.Result()
