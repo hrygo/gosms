@@ -28,6 +28,11 @@ windows: prepare
 	GOOS=windows GOARCH=${GOARCH} go build ${LDFLAGS} -trimpath -o ${PUBLISH}/${BINARY}-windows-${GOARCH}.exe . ; \
 	cd - >/dev/null
 
+client: prepareC
+	@cd ./cmd/client ; \
+	go build ${LDFLAGS} -trimpath -o ${PUBLISH}/cli/smscli . ; \
+	cd - >/dev/null
+
 ## format: format source codes
 format:
 	@cd ${BUILD_DIR}; \
@@ -35,10 +40,15 @@ format:
 	cd - >/dev/null
 
 
-prepare: clean
+prepare:
 	@mkdir -p ${PUBLISH} ; \
 	cp -rf config ${PUBLISH} ; \
 	cp -rf ./shells/*.sh ${PUBLISH}
+
+prepareC:
+	@mkdir -p ${PUBLISH}/cli ; \
+	cp -rf config ${PUBLISH}/cli ; \
+	cp -rf ./shells/cstart.sh ${PUBLISH}/cli
 
 clean:
 	@echo "  >  Cleaning build cache"

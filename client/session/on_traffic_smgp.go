@@ -11,7 +11,8 @@ import (
 	"github.com/hrygo/gosmsn/codec/smgp"
 )
 
-func (s *Session) sendBySmgp(phone string, message string) (results []*Result) {
+func (s *Session) sendBySmgp(phone string, message string) (results []any) {
+	var send = fmt.Sprintf("[%s] OnTraffic >>>", s.serverName)
 	mts := smgp.NewSubmit(s.cli, []string{phone}, message, uint32(codec.B32Seq.NextVal()), smgp.MtOptions{})
 	for _, mt := range mts {
 		_, err := s.con.Write(mt.Encode())
@@ -21,6 +22,8 @@ func (s *Session) sendBySmgp(phone string, message string) (results []*Result) {
 			return nil
 		}
 		mtt := mt.(*smgp.Submit)
+		log.Debug(send, mtt.Log()...)
+
 		r := Result{SendTime: time.Now()}
 		r.RequestId = mtt.SequenceId
 		r.Phone = phone

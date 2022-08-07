@@ -1,15 +1,13 @@
 package auth
 
 import (
-	"io/ioutil"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/hrygo/log"
-	"gopkg.in/yaml.v3"
 
 	bs "github.com/hrygo/gosmsn/bootstrap"
+	db "github.com/hrygo/gosmsn/databse"
 )
 
 type Store interface {
@@ -33,9 +31,10 @@ func init() {
 	st := bs.ConfigYml.GetString("AuthClient.StoreType")
 	if "" == st || "yaml" == st || "yml" == st {
 		Cache = &YamlStore{cache: make(map[string]*Client)}
+	} else if "mongo" == st {
+		db.InitDB(bs.ConfigYml, "AuthClient.Mongo")
+		Cache = &MongoStore{cache: make(map[string]*Client)}
 	}
-	// TODO 其他类型存储的判断
-
 	// 初次加载存储
 	Cache.Load()
 	// 启动定时器，定时加载存储
@@ -58,68 +57,4 @@ func startTicker(s Store) {
 			s.Load()
 		}
 	}(s)
-}
-
-// 公共代码结束 _________________________________
-// 以下为基于Yaml文件的实现的实现 _________________________________
-
-type YamlStore storage
-
-func (y *YamlStore) Load() {
-	dir := bs.ConfigYml.GetString("AuthClient.YamlFilePath")
-	if "" == dir {
-		dir = "config/clients/"
-	}
-	if !strings.HasSuffix(dir, "/") {
-		dir += "/"
-	}
-	dir = bs.BasePath + dir
-	fs, err := ioutil.ReadDir(dir)
-	if err != nil {
-		log.Fatalf("Config file init error: %v", err)
-	}
-
-	for _, f := range fs {
-		f := f
-		if f.IsDir() {
-			continue
-		}
-		// e.g. cmpp_123456
-		var key string
-		if strings.HasSuffix(f.Name(), ".yaml") {
-			key = f.Name()[:len(f.Name())-5]
-		}
-		if strings.HasSuffix(f.Name(), ".yml") {
-			key = f.Name()[:len(f.Name())-4]
-		}
-		if "" == key {
-			continue
-		}
-		data, err := ioutil.ReadFile(dir + f.Name())
-		if err != nil {
-			log.Fatalf("Config file init error: %v", err)
-		}
-
-		unmarshal(data, strings.ToLower(key), y)
-	}
-}
-
-func (y *YamlStore) FindByCid(isp string, cid string) *Client {
-	y.Lock()
-	defer y.Unlock()
-	client := y.cache[strings.ToLower(isp)+"_"+cid]
-	return client
-}
-
-func unmarshal(data []byte, id string, y *YamlStore) {
-	y.Lock()
-	defer y.Unlock()
-
-	cli := &Client{}
-	err := yaml.Unmarshal(data, cli)
-	if err != nil {
-		log.Errorf("Config file init error: %v", err)
-	} else {
-		y.cache[id] = cli
-	}
 }

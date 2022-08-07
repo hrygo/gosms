@@ -11,7 +11,8 @@ import (
 	"github.com/hrygo/gosmsn/utils"
 )
 
-func (s *Session) sendByCmpp(phone string, message string) (results []*Result) {
+func (s *Session) sendByCmpp(phone string, message string) (results []any) {
+	var send = fmt.Sprintf("[%s] OnTraffic >>>", s.serverName)
 	mts := cmpp.NewSubmit(s.cli, []string{phone}, message, uint32(codec.B32Seq.NextVal()))
 	for _, mt := range mts {
 		_, err := s.con.Write(mt.Encode())
@@ -21,6 +22,8 @@ func (s *Session) sendByCmpp(phone string, message string) (results []*Result) {
 			return nil
 		}
 		mtt := mt.(*cmpp.Submit)
+		log.Debug(send, mtt.Log()...)
+
 		r := Result{SendTime: time.Now()}
 		r.RequestId = mtt.SequenceId
 		r.Phone = phone

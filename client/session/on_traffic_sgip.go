@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-func (s *Session) sendBySgip(phone string, message string) []*Result {
+func (s *Session) sendBySgip(phone string, message string) []any {
 	return nil
 }
 

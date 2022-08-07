@@ -23,7 +23,7 @@ var RequestIdResultCacheMap sync.Map
 var MsgIdResultCacheMap sync.Map
 
 // Send 发送短信
-func (s *Session) Send(phone string, message string) []*Result {
+func (s *Session) Send(phone string, message string) []any {
 	switch s.serverName {
 	case CMPP:
 		return s.sendByCmpp(phone, message)

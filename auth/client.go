@@ -5,6 +5,7 @@ import (
 )
 
 type Client struct {
+	ISP             string        `yaml:"isp"`               // 即运营商标识 cmpp、sgip、smgp
 	ClientId        string        `yaml:"client-id"`         // 即SourceAddr
 	SharedSecret    string        `yaml:"shared-secret"`     // 通讯密码
 	Version         byte          `yaml:"version"`           // 见CMPP协议，48表示3.0 即 0x30 = 0011 0000

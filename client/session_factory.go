@@ -20,7 +20,7 @@ import (
 	"github.com/hrygo/gosmsn/event_manage"
 )
 
-var smsConf yaml_config.YmlConfig
+var Conf yaml_config.YmlConfig
 var factories [3]*SessionFactory
 
 // resultQueryCacheMap 临时存储短信发送的返回结果数据，Key为queryId,value为[]*Result，后续采用数据库存储
@@ -28,10 +28,10 @@ var resultQueryCacheMap sync.Map
 var pool *goroutine.Pool
 
 func init() {
-	smsConf = yaml_config.CreateYamlFactory("config", "sms", bootstrap.ProjectName)
-	smsConf.ConfigFileChangeListen()
+	Conf = yaml_config.CreateYamlFactory("config", "sms", bootstrap.ProjectName)
+	Conf.ConfigFileChangeListen()
 
-	poolSize := smsConf.GetInt("cache.handler-pool-size")
+	poolSize := Conf.GetInt("cache.handler-pool-size")
 	if poolSize < 10 {
 		poolSize = 10
 	}
@@ -47,6 +47,10 @@ func init() {
 	event_manage.CreateEventManage(bootstrap.ShutdownEventPrefix).Register("cache_pool", func(args ...any) {
 		pool.Release()
 	})
+}
+
+func AsyncPool() *goroutine.Pool {
+	return pool
 }
 
 type SessionFactory struct {
@@ -87,20 +91,20 @@ func CreateSessionFactory(isp string) *SessionFactory {
 		return saved
 	}
 
-	cli := auth.Cache.FindByCid(isp, smsConf.GetString(isp+".client-id"))
+	cli := auth.Cache.FindByCid(isp, Conf.GetString(isp+".client-id"))
 	if cli == nil {
-		log.Fatalf("isp=%s, clientId=%s not found!", isp, smsConf.GetString(isp+".client-id"))
+		log.Fatalf("isp=%s, clientId=%s not found!", isp, Conf.GetString(isp+".client-id"))
 	}
 
 	factory := &SessionFactory{srvName: isp, cli: cli}
 
-	address := smsConf.GetString(isp + ".address")
+	address := Conf.GetString(isp + ".address")
 	if address == "" {
 		log.Fatal(isp + ".address can't be empty")
 	}
 	factory.serverAddr = address
 
-	segment := smsConf.GetString(isp + ".segment")
+	segment := Conf.GetString(isp + ".segment")
 	if segment == "" {
 		log.Fatal(isp + ".segment can't be empty")
 	}
@@ -110,7 +114,7 @@ func CreateSessionFactory(isp string) *SessionFactory {
 		log.Fatal(err.Error())
 	}
 
-	maxConns := smsConf.GetInt(isp + ".max-conns")
+	maxConns := Conf.GetInt(isp + ".max-conns")
 	if maxConns > 0 {
 		factory.sessions = make([]*session.Session, 0, maxConns)
 	} else {
@@ -128,7 +132,7 @@ func CreateSessionFactory(isp string) *SessionFactory {
 		log.Error(err.Error())
 	}
 
-	winSize := smsConf.GetInt(isp + ".mt-window-size")
+	winSize := Conf.GetInt(isp + ".mt-window-size")
 	if maxConns > 0 {
 		factory.window = make(chan struct{}, winSize)
 	} else {
@@ -137,7 +141,7 @@ func CreateSessionFactory(isp string) *SessionFactory {
 
 	// 默认1W微妙即10毫秒生成一个token，也即tps最大200
 	ev := 10 * time.Millisecond
-	throughput := smsConf.GetInt(isp + ".throughput")
+	throughput := Conf.GetInt(isp + ".throughput")
 	if throughput > 0 {
 		// 1s = 1000*1000 microsecond = 1000000 microsecond, Throughput 单位时TPS
 		ev = time.Duration(1000000/throughput) * time.Microsecond
@@ -171,9 +175,9 @@ func (f *SessionFactory) PeekSession() *session.Session {
 }
 
 // StartCacheExpireTicker 过期数据定期检查器
-func StartCacheExpireTicker(expireHandler func([]*session.Result)) {
+func StartCacheExpireTicker(asyncHandler func([]any)) {
 	go func() {
-		d := smsConf.GetDuration("cache.expire-check-duration")
+		d := Conf.GetDuration("cache.expire-check-duration")
 		if d == 0 {
 			d = time.Second
 		}
@@ -183,7 +187,7 @@ func StartCacheExpireTicker(expireHandler func([]*session.Result)) {
 		for {
 			<-ticker.C
 			// 1. 查询缓存的过期清晰与持久化
-			cleanQueryCacheMap(expireHandler)
+			cleanQueryCacheMap(asyncHandler)
 
 			// 2. 请求响应缓存的清理
 			cleanRequestIdCacheMap()
@@ -194,31 +198,30 @@ func StartCacheExpireTicker(expireHandler func([]*session.Result)) {
 	}()
 }
 
-func cleanQueryCacheMap(expireHandler func([]*session.Result)) {
+func cleanQueryCacheMap(asyncHandler func([]any)) {
 	expired := make([]int64, 0, 16)
-	batch := make([]*session.Result, 0, 128)
+	batch := make([]any, 0, 128)
 	resultQueryCacheMap.Range(func(key, value any) bool {
 		id := key.(int64)
-		results := value.([]*session.Result)
+		results := value.([]any)
 		if len(results) == 0 {
 			expired = append(expired, id)
 		} else {
-			d := smsConf.GetDuration("cache.expire-time")
+			d := Conf.GetDuration("cache.expire-time")
 			if d == 0 {
 				d = time.Minute
 			}
 			// 这里过期时间不需精准，我们只判断每个切片的第一个元素是否已经过程，如果过期，就整个切片删除
-			if results[0].SendTime.Add(d).Before(time.Now()) {
+			r0 := results[0].(*session.Result)
+			if r0.SendTime.Add(d).Before(time.Now()) {
 				expired = append(expired, id)
 				batch = append(batch, results...)
 			}
 		}
 		// 如果过期处理器不为空，异步处理结果数据
-		if expireHandler != nil && len(batch) >= 64 {
-			_ = pool.Submit(func() {
-				expireHandler(batch)
-			})
-			batch = make([]*session.Result, 0, 128)
+		if asyncHandler != nil && len(batch) >= 64 {
+			asyncHandler(batch)
+			batch = make([]any, 0, 128)
 		}
 		return true
 	})
@@ -227,17 +230,15 @@ func cleanQueryCacheMap(expireHandler func([]*session.Result)) {
 		resultQueryCacheMap.Delete(key)
 	}
 	// 如果过期处理器不为空，异步处理结果数据
-	if expireHandler != nil && len(batch) > 0 {
-		_ = pool.Submit(func() {
-			expireHandler(batch)
-		})
+	if asyncHandler != nil && len(batch) > 0 {
+		asyncHandler(batch)
 	}
 }
 
 func cleanRequestIdCacheMap() {
 	expiredKeys := make([]uint32, 0, 32)
 	session.RequestIdResultCacheMap.Range(func(key, value any) bool {
-		d := smsConf.GetDuration("cache.expire-time")
+		d := Conf.GetDuration("cache.expire-time")
 		if d == 0 {
 			d = time.Minute
 		}
@@ -256,7 +257,7 @@ func cleanRequestIdCacheMap() {
 func cleanMsgIdCacheMap() {
 	expiredKeys := make([]string, 0, 32)
 	session.MsgIdResultCacheMap.Range(func(key, value any) bool {
-		d := smsConf.GetDuration("cache.expire-time")
+		d := Conf.GetDuration("cache.expire-time")
 		if d == 0 {
 			d = time.Minute
 		}
@@ -274,7 +275,7 @@ func cleanMsgIdCacheMap() {
 
 func (f *SessionFactory) startLruSortTicker() {
 	go func() {
-		d := smsConf.GetDuration(f.srvName + ".tick-duration")
+		d := Conf.GetDuration(f.srvName + ".tick-duration")
 		if d == 0 {
 			d = time.Second
 		}
@@ -289,7 +290,7 @@ func (f *SessionFactory) startLruSortTicker() {
 }
 
 func (f *SessionFactory) lruSort() {
-	maxConns := smsConf.GetInt(f.srvName + ".max-conns")
+	maxConns := Conf.GetInt(f.srvName + ".max-conns")
 	var newSlice []*session.Session
 	if maxConns <= 0 {
 		maxConns = 2

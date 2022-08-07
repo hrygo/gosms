@@ -4,23 +4,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hrygo/log"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hrygo/gosmsn/bootstrap"
 	sms "github.com/hrygo/gosmsn/client"
-	"github.com/hrygo/gosmsn/client/session"
 )
 
 var _ = bootstrap.BasePath
 
 func init() {
-	sms.StartCacheExpireTicker(func(results []*session.Result) {
-		log.Infof("[Persistence] Save %d send results to db.", len(results))
-		for _, result := range results {
-			log.Infof("[Persistence] %v", result)
-		}
-	})
+	sms.PersistenceSmsJournal()
 }
 
 func TestSend(t *testing.T) {

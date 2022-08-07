@@ -31,9 +31,17 @@ Server:
         - "0012_,_你是个好人！"
 
 AuthClient:
-  StoreType: "yaml"               # 通过yaml文件来存储客户端配置信息，还支持mysql,postgresql等（计划）
+  StoreType: "mongo"              # 通过yaml文件来存储客户端配置信息，还支持mongo等
   ReloadTicker: 5m                # 配置重新加载时间间隔
   YamlFilePath: "config/clients"  # auth yaml 配置文件的路径
+  Mongo:
+    URI: "mongodb+srv://<user>:<passwd>@cluster0.ppiyq4w.mongodb.net/test"
+    ConnectTimeout: 15s
+    ReadTimeout: 15s
+    WriteTimeout: 15s
+    HeartbeatInterval: 60s
+    MinPoolSize: 2
+    MaxPoolSize: 10
 
 Snowflake: # 类雪花算法序号生成器配置
   B64:
