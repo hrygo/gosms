@@ -25,8 +25,6 @@ cd cli
 # -i 迭代次数
 ```
 
-## 功能及原理说明
-
 ### 采用mongodb存储客户端认证配置
 
 /config/config.yaml
@@ -51,7 +49,7 @@ export MONGO_USER=xxx
 export MONGO_PASSWD=xxx
 ```
 
-如果不启用MongoDB，将设置
+如果不启用MongoDB，需设置
 
 ```yaml
 AuthClient:
@@ -80,4 +78,8 @@ export MONGO_USER=xxx
 export MONGO_PASSWD=xxx
 ```
 
-如果不启用MongoDB不设置 `Mongo.URI` 即可。
+如果不启用MongoDB，不设置 `Mongo.URI` 即可。
+
+## 功能及原理说明
+
+TODO 其他说明文档待补充
