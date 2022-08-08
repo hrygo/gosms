@@ -7,7 +7,7 @@ import (
 	"github.com/hrygo/log"
 	"github.com/panjf2000/gnet/v2"
 
-	"github.com/hrygo/gosmsn/codec/smgp"
+	"github.com/hrygo/gosms/codec/smgp"
 )
 
 var smgpActiveResp TrafficHandler = func(cmd, seq uint32, buff []byte, c gnet.Conn, s *Server) (next bool, action gnet.Action) {

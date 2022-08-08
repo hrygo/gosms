@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hrygo/gosmsn/utils"
+	"github.com/hrygo/gosms/utils"
 )
 
 func Test_BcdToString(t *testing.T) {

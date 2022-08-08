@@ -7,7 +7,7 @@ import (
 	"github.com/hrygo/log"
 	"gopkg.in/yaml.v3"
 
-	bs "github.com/hrygo/gosmsn/bootstrap"
+	bs "github.com/hrygo/gosms/bootstrap"
 )
 
 type YamlStore storage

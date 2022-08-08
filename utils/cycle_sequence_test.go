@@ -3,7 +3,7 @@ package utils_test
 import (
 	"testing"
 
-	"github.com/hrygo/gosmsn/utils"
+	"github.com/hrygo/gosms/utils"
 )
 
 var seq = utils.NewCycleSequence(1, 1)

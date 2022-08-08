@@ -5,7 +5,7 @@ import (
 
 	"github.com/hrygo/log"
 
-	"github.com/hrygo/gosmsn/server"
+	"github.com/hrygo/gosms/server"
 )
 
 func TestFlatMapLog(t *testing.T) {

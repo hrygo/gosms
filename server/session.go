@@ -10,8 +10,8 @@ import (
 	"github.com/panjf2000/gnet/v2/pkg/pool/goroutine"
 	"golang.org/x/time/rate"
 
-	"github.com/hrygo/gosmsn/auth"
-	"github.com/hrygo/gosmsn/codec"
+	"github.com/hrygo/gosms/auth"
+	"github.com/hrygo/gosms/codec"
 )
 
 // 会话信息 gnet.Conn 的附加属性

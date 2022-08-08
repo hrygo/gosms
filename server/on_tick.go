@@ -8,13 +8,13 @@ import (
 	"github.com/hrygo/log"
 	"github.com/panjf2000/gnet/v2"
 
-	"github.com/hrygo/gosmsn/auth"
-	bs "github.com/hrygo/gosmsn/bootstrap"
-	"github.com/hrygo/gosmsn/codec"
-	"github.com/hrygo/gosmsn/codec/cmpp"
-	"github.com/hrygo/gosmsn/codec/smgp"
-	"github.com/hrygo/gosmsn/my_errors"
-	"github.com/hrygo/gosmsn/utils"
+	"github.com/hrygo/gosms/auth"
+	bs "github.com/hrygo/gosms/bootstrap"
+	"github.com/hrygo/gosms/codec"
+	"github.com/hrygo/gosms/codec/cmpp"
+	"github.com/hrygo/gosms/codec/smgp"
+	"github.com/hrygo/gosms/my_errors"
+	"github.com/hrygo/gosms/utils"
 )
 
 func (s *Server) OnTick() (delay time.Duration, action gnet.Action) {

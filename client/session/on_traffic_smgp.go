@@ -7,8 +7,8 @@ import (
 
 	"github.com/hrygo/log"
 
-	"github.com/hrygo/gosmsn/codec"
-	"github.com/hrygo/gosmsn/codec/smgp"
+	"github.com/hrygo/gosms/codec"
+	"github.com/hrygo/gosms/codec/smgp"
 )
 
 func (s *Session) sendBySmgp(phone string, message string) (results []any) {

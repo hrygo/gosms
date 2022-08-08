@@ -3,8 +3,8 @@ package smgp_test
 import (
 	"testing"
 
-	"github.com/hrygo/gosmsn/codec"
-	"github.com/hrygo/gosmsn/codec/smgp"
+	"github.com/hrygo/gosms/codec"
+	"github.com/hrygo/gosms/codec/smgp"
 )
 
 func TestExit(t *testing.T) {

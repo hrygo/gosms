@@ -6,9 +6,9 @@ import (
 
 	"github.com/hrygo/log"
 
-	"github.com/hrygo/gosmsn/codec"
-	"github.com/hrygo/gosmsn/codec/cmpp"
-	"github.com/hrygo/gosmsn/utils"
+	"github.com/hrygo/gosms/codec"
+	"github.com/hrygo/gosms/codec/cmpp"
+	"github.com/hrygo/gosms/utils"
 )
 
 func (s *Session) sendByCmpp(phone string, message string) (results []any) {

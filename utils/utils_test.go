@@ -3,7 +3,7 @@ package utils_test
 import (
 	"testing"
 
-	"github.com/hrygo/gosmsn/utils"
+	"github.com/hrygo/gosms/utils"
 )
 
 func TestTimeStamp2Str(t *testing.T) {

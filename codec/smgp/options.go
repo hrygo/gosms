@@ -3,8 +3,8 @@ package smgp
 import (
 	"time"
 
-	"github.com/hrygo/gosmsn/auth"
-	"github.com/hrygo/gosmsn/utils"
+	"github.com/hrygo/gosms/auth"
+	"github.com/hrygo/gosms/utils"
 )
 
 type MtOptions struct {

@@ -5,9 +5,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/hrygo/gosmsn/auth"
-	"github.com/hrygo/gosmsn/bootstrap"
-	"github.com/hrygo/gosmsn/codec"
+	"github.com/hrygo/gosms/auth"
+	"github.com/hrygo/gosms/bootstrap"
+	"github.com/hrygo/gosms/codec"
 )
 
 var _ = bootstrap.BasePath

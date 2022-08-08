@@ -8,10 +8,10 @@ import (
 	"github.com/hrygo/log"
 	"github.com/panjf2000/gnet/v2"
 
-	"github.com/hrygo/gosmsn/auth"
-	"github.com/hrygo/gosmsn/bootstrap"
-	"github.com/hrygo/gosmsn/codec/cmpp"
-	"github.com/hrygo/gosmsn/utils"
+	"github.com/hrygo/gosms/auth"
+	"github.com/hrygo/gosms/bootstrap"
+	"github.com/hrygo/gosms/codec/cmpp"
+	"github.com/hrygo/gosms/utils"
 )
 
 var cmppSubmit TrafficHandler = func(cmd, seq uint32, buff []byte, c gnet.Conn, s *Server) (next bool, action gnet.Action) {

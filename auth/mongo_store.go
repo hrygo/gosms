@@ -7,7 +7,7 @@ import (
 	"github.com/hrygo/log"
 	"go.mongodb.org/mongo-driver/bson"
 
-	db "github.com/hrygo/gosmsn/databse"
+	db "github.com/hrygo/gosms/databse"
 )
 
 const (

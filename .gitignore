@@ -25,6 +25,6 @@
 # Others
 logs
 *.pid
-gosmsn
+gosms
 publish
 

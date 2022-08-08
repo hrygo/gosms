@@ -7,9 +7,9 @@ import (
 
 	"github.com/hrygo/log"
 
-	"github.com/hrygo/gosmsn/auth"
-	"github.com/hrygo/gosmsn/codec"
-	"github.com/hrygo/gosmsn/utils"
+	"github.com/hrygo/gosms/auth"
+	"github.com/hrygo/gosms/codec"
+	"github.com/hrygo/gosms/utils"
 )
 
 // Delivery 上行短信或状态报告，不支持长短信

@@ -10,8 +10,8 @@ import (
 	"github.com/hrygo/log"
 	"github.com/stretchr/testify/assert"
 
-	bs "github.com/hrygo/gosmsn/bootstrap"
-	sms "github.com/hrygo/gosmsn/client"
+	bs "github.com/hrygo/gosms/bootstrap"
+	sms "github.com/hrygo/gosms/client"
 )
 
 func TestSessionFactory(t *testing.T) {

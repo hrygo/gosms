@@ -6,7 +6,7 @@ import (
 
 	"github.com/hrygo/log"
 
-	"github.com/hrygo/gosmsn/codec"
+	"github.com/hrygo/gosms/codec"
 )
 
 type MessageHeader struct {

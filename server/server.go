@@ -11,7 +11,7 @@ import (
 	"github.com/panjf2000/gnet/v2"
 	"github.com/panjf2000/gnet/v2/pkg/pool/goroutine"
 
-	bs "github.com/hrygo/gosmsn/bootstrap"
+	bs "github.com/hrygo/gosms/bootstrap"
 )
 
 const (

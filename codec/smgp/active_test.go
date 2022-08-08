@@ -3,9 +3,9 @@ package smgp_test
 import (
 	"testing"
 
-	"github.com/hrygo/gosmsn/bootstrap"
-	"github.com/hrygo/gosmsn/codec"
-	"github.com/hrygo/gosmsn/codec/smgp"
+	"github.com/hrygo/gosms/bootstrap"
+	"github.com/hrygo/gosms/codec"
+	"github.com/hrygo/gosms/codec/smgp"
 )
 
 var _ = bootstrap.BasePath

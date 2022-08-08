@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/hrygo/gosmsn/codec"
+	"github.com/hrygo/gosms/codec"
 )
 
 func TestReport(t *testing.T) {

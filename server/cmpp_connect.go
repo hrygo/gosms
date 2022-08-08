@@ -6,8 +6,8 @@ import (
 	"github.com/hrygo/log"
 	"github.com/panjf2000/gnet/v2"
 
-	"github.com/hrygo/gosmsn/auth"
-	"github.com/hrygo/gosmsn/codec/cmpp"
+	"github.com/hrygo/gosms/auth"
+	"github.com/hrygo/gosms/codec/cmpp"
 )
 
 var cmppConnect TrafficHandler = func(cmd, seq uint32, buff []byte, c gnet.Conn, s *Server) (next bool, action gnet.Action) {

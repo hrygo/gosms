@@ -14,10 +14,10 @@ import (
 	"github.com/panjf2000/gnet/v2/pkg/pool/goroutine"
 	"golang.org/x/time/rate"
 
-	"github.com/hrygo/gosmsn/auth"
-	"github.com/hrygo/gosmsn/bootstrap"
-	"github.com/hrygo/gosmsn/client/session"
-	"github.com/hrygo/gosmsn/event_manage"
+	"github.com/hrygo/gosms/auth"
+	"github.com/hrygo/gosms/bootstrap"
+	"github.com/hrygo/gosms/client/session"
+	"github.com/hrygo/gosms/event_manage"
 )
 
 var Conf yaml_config.YmlConfig

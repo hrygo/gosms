@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/hrygo/gosmsn/auth"
-	"github.com/hrygo/gosmsn/codec"
+	"github.com/hrygo/gosms/auth"
+	"github.com/hrygo/gosms/codec"
 )
 
 var cli = auth.Cache.FindByCid("smgp", "12345678")

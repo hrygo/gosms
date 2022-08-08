@@ -6,8 +6,8 @@ import (
 
 	"github.com/hrygo/log"
 
-	bs "github.com/hrygo/gosmsn/bootstrap"
-	db "github.com/hrygo/gosmsn/databse"
+	bs "github.com/hrygo/gosms/bootstrap"
+	db "github.com/hrygo/gosms/databse"
 )
 
 type Store interface {

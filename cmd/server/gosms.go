@@ -11,13 +11,13 @@ import (
 
 	"github.com/hrygo/log"
 
-	bs "github.com/hrygo/gosmsn/bootstrap"
-	"github.com/hrygo/gosmsn/server"
+	bs "github.com/hrygo/gosms/bootstrap"
+	"github.com/hrygo/gosms/server"
 )
 
 func main() {
 	rand.Seed(time.Now().Unix()) // 随机种子
-	log.Infof("current pid is %s.", savePid(".gosmsn.pid"))
+	log.Infof("current pid is %s.", savePid(".gosms.pid"))
 	pprofDebug()
 
 	server.Start(server.New(server.CMPP))

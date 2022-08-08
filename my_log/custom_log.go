@@ -4,7 +4,7 @@ import (
 	"github.com/hrygo/log"
 	"go.uber.org/zap"
 
-	bs "github.com/hrygo/gosmsn/bootstrap"
+	bs "github.com/hrygo/gosms/bootstrap"
 )
 
 // New 创建一个自定义日志：

@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	. "github.com/hrygo/gosmsn/utils"
+	. "github.com/hrygo/gosms/utils"
 )
 
 const (

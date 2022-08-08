@@ -8,7 +8,7 @@ import (
 
 	"github.com/hrygo/log"
 
-	"github.com/hrygo/gosmsn/event_manage"
+	"github.com/hrygo/gosms/event_manage"
 )
 
 // 优雅停机相关代码

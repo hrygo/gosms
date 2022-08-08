@@ -6,7 +6,7 @@ import (
 	"github.com/hrygo/log"
 	"github.com/panjf2000/gnet/v2"
 
-	"github.com/hrygo/gosmsn/my_errors"
+	"github.com/hrygo/gosms/my_errors"
 )
 
 func (s *Server) OnOpen(c gnet.Conn) (out []byte, action gnet.Action) {

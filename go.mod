@@ -1,4 +1,4 @@
-module github.com/hrygo/gosmsn
+module github.com/hrygo/gosms
 
 go 1.18
 

@@ -3,7 +3,7 @@ package db
 import (
 	"testing"
 
-	"github.com/hrygo/gosmsn/bootstrap"
+	"github.com/hrygo/gosms/bootstrap"
 )
 
 func TestInitDB(t *testing.T) {

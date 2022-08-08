@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/hrygo/gosmsn/utils/snowflake32"
+	"github.com/hrygo/gosms/utils/snowflake32"
 )
 
 var seq32 = snowflake32.NewSnowflake(3, 7)

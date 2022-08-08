@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/hrygo/gosmsn/codec"
-	"github.com/hrygo/gosmsn/utils"
+	"github.com/hrygo/gosms/codec"
+	"github.com/hrygo/gosms/utils"
 )
 
 func TestEncode(t *testing.T) {

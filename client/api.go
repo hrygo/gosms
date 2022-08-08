@@ -6,9 +6,9 @@ import (
 
 	"github.com/hrygo/log"
 
-	"github.com/hrygo/gosmsn/client/session"
-	"github.com/hrygo/gosmsn/codec"
-	db "github.com/hrygo/gosmsn/databse"
+	"github.com/hrygo/gosms/client/session"
+	"github.com/hrygo/gosms/codec"
+	db "github.com/hrygo/gosms/databse"
 )
 
 // Send sms to phones return query id

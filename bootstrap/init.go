@@ -8,14 +8,14 @@ import (
 	"github.com/hrygo/yaml_config"
 	"go.uber.org/zap"
 
-	"github.com/hrygo/gosmsn/codec"
-	"github.com/hrygo/gosmsn/my_errors"
-	"github.com/hrygo/gosmsn/utils"
-	"github.com/hrygo/gosmsn/utils/snowflake"
+	"github.com/hrygo/gosms/codec"
+	"github.com/hrygo/gosms/my_errors"
+	"github.com/hrygo/gosms/utils"
+	"github.com/hrygo/gosms/utils/snowflake"
 )
 
 const (
-	ProjectName       = "gosmsn"
+	ProjectName       = "gosms"
 	DefaultConfigPath = "config/"
 	DefaultConfigFile = DefaultConfigPath + "config.yaml"
 )

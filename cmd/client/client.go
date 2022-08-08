@@ -7,9 +7,9 @@ import (
 
 	"github.com/hrygo/log"
 
-	bs "github.com/hrygo/gosmsn/bootstrap"
-	sms "github.com/hrygo/gosmsn/client"
-	"github.com/hrygo/gosmsn/client/session"
+	bs "github.com/hrygo/gosms/bootstrap"
+	sms "github.com/hrygo/gosms/client"
+	"github.com/hrygo/gosms/client/session"
 )
 
 func main() {

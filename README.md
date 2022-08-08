@@ -1,4 +1,4 @@
-# gosmsn golang开发的短信网关
+# gosms golang开发的短信网关
 
 ## Quick Start
 
@@ -13,7 +13,7 @@ make linux
 make client
 
 cd publish
-mv gosmsn-* gosmsn
+mv gosms-* gosms
 # 启动服务端 
 ./start.sh
 

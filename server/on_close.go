@@ -6,7 +6,7 @@ import (
 	"github.com/hrygo/log"
 	"github.com/panjf2000/gnet/v2"
 
-	"github.com/hrygo/gosmsn/my_log"
+	"github.com/hrygo/gosms/my_log"
 )
 
 var logDb = my_log.New("CounterDB")

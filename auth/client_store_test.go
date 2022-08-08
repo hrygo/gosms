@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 
-	"github.com/hrygo/gosmsn/auth"
+	"github.com/hrygo/gosms/auth"
 )
 
 func TestYamlStore_FindByCid(t *testing.T) {

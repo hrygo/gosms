@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/hrygo/gosmsn/bootstrap"
-	sms "github.com/hrygo/gosmsn/client"
+	"github.com/hrygo/gosms/bootstrap"
+	sms "github.com/hrygo/gosms/client"
 )
 
 var _ = bootstrap.BasePath

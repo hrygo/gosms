@@ -10,10 +10,10 @@ import (
 
 	"github.com/hrygo/log"
 
-	"github.com/hrygo/gosmsn/auth"
-	"github.com/hrygo/gosmsn/codec"
-	"github.com/hrygo/gosmsn/codec/cmpp"
-	"github.com/hrygo/gosmsn/codec/smgp"
+	"github.com/hrygo/gosms/auth"
+	"github.com/hrygo/gosms/codec"
+	"github.com/hrygo/gosms/codec/cmpp"
+	"github.com/hrygo/gosms/codec/smgp"
 )
 
 type Session struct {

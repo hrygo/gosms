@@ -6,7 +6,7 @@ import (
 
 	"github.com/hrygo/log"
 
-	"github.com/hrygo/gosmsn/my_errors"
+	"github.com/hrygo/gosms/my_errors"
 )
 
 // Event 事件为无返回值的任意函数
