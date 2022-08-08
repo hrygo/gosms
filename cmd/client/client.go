@@ -16,6 +16,8 @@ func main() {
 	// 启动记录数据库的程序
 	if sms.Conf.GetString("Mongo.URI") != "" {
 		sms.PersistenceSmsJournal()
+	} else {
+		sms.StartCacheExpireTicker(nil)
 	}
 
 	phone := flag.String("p", "13800001111", "phone")
