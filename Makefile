@@ -28,12 +28,13 @@ windows: prepare
 	GOOS=windows GOARCH=${GOARCH} go build ${LDFLAGS} -trimpath -o ${PUBLISH}/${BINARY}-windows-${GOARCH}.exe . ; \
 	cd - >/dev/null
 
+## client: Build client for your current platform
 client: prepareC
 	@cd ./cmd/client ; \
 	go build ${LDFLAGS} -trimpath -o ${PUBLISH}/cli/smscli . ; \
 	cd - >/dev/null
 
-## format: format source codes
+## format: Format source codes
 format:
 	@cd ${BUILD_DIR}; \
 	go fmt $$(go list ./... | grep -v /vendor/) ; \
