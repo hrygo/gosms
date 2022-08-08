@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/hrygo/log v1.2.1
-	github.com/hrygo/yaml_config v1.2.2
+	github.com/hrygo/yaml_config v1.2.4
 	github.com/panjf2000/ants/v2 v2.4.8
 	github.com/panjf2000/gnet/v2 v2.1.0
 	github.com/stretchr/testify v1.7.2

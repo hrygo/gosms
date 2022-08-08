@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/hrygo/log"
+	"github.com/hrygo/yaml_config"
 
-	bs "github.com/hrygo/gosms/bootstrap"
 	db "github.com/hrygo/gosms/databse"
 )
 
@@ -24,37 +24,45 @@ var Cache Store
 
 type storage struct {
 	sync.Mutex
-	cache map[string]*Client
+	cache  map[string]*Client
+	config yaml_config.YmlConfig
 }
 
-func init() {
-	st := bs.ConfigYml.GetString("AuthClient.StoreType")
+func New(c yaml_config.YmlConfig) (cache Store) {
+	st := c.GetString("AuthClient.StoreType")
 	if "" == st || "yaml" == st || "yml" == st {
-		Cache = &YamlStore{cache: make(map[string]*Client)}
+		cache = &YamlStore{
+			config: c,
+			cache:  make(map[string]*Client),
+		}
 	} else if "mongo" == st {
-		db.InitDB(bs.ConfigYml, "AuthClient.Mongo")
-		Cache = &MongoStore{cache: make(map[string]*Client)}
+		db.InitDB(c, "AuthClient.Mongo")
+		cache = &MongoStore{
+			config: c,
+			cache:  make(map[string]*Client),
+		}
 	}
 	// 初次加载存储
-	Cache.Load()
+	cache.Load()
 	// 启动定时器，定时加载存储
-	startTicker(Cache)
+	startTicker(c, cache)
+	return
 }
 
-func startTicker(s Store) {
-	go func(s Store) {
-		d := bs.ConfigYml.GetDuration("AuthClient.ReloadTicker")
+func startTicker(c yaml_config.YmlConfig, s Store) {
+	go func() {
+		d := c.GetDuration("AuthClient.ReloadTicker")
 		if d == 0 {
-			log.Warn("Client.ReloadTicker configuration missing, ticker not started.")
-			return
+			log.Warn("Client.ReloadTicker configuration missing, use default value: 5 minutes.")
+			d = 5 * time.Minute
 		}
 		ticker := time.NewTicker(d)
 		defer ticker.Stop()
 
 		for {
 			<-ticker.C
-			log.Warn("auth cache reload.")
+			log.Warn("Auth cache reload!")
 			s.Load()
 		}
-	}(s)
+	}()
 }

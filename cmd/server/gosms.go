@@ -11,6 +11,7 @@ import (
 
 	"github.com/hrygo/log"
 
+	"github.com/hrygo/gosms/auth"
 	bs "github.com/hrygo/gosms/bootstrap"
 	"github.com/hrygo/gosms/server"
 )
@@ -19,6 +20,8 @@ func main() {
 	rand.Seed(time.Now().Unix()) // 随机种子
 	log.Infof("current pid is %s.", savePid(".gosms.pid"))
 	pprofDebug()
+
+	auth.Cache = auth.New(bs.ConfigYml)
 
 	server.Start(server.New(server.CMPP))
 	server.Start(server.New(server.SMGP))

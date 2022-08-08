@@ -7,6 +7,7 @@ import (
 
 	"github.com/hrygo/log"
 
+	"github.com/hrygo/gosms/auth"
 	bs "github.com/hrygo/gosms/bootstrap"
 	sms "github.com/hrygo/gosms/client"
 	"github.com/hrygo/gosms/client/session"
@@ -19,6 +20,8 @@ func main() {
 	} else {
 		sms.StartCacheExpireTicker(nil)
 	}
+
+	auth.Cache = auth.New(bs.ConfigYml)
 
 	phone := flag.String("p", "13800001111", "phone")
 	message := flag.String("m", "hello world", "message")

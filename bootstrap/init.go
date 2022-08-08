@@ -56,6 +56,10 @@ func StatChan() <-chan struct{} {
 
 func setBasePath(project string) {
 	if curPath, err := os.Getwd(); err == nil {
+		log.Debugf("os.Getwd: %s", curPath)
+		for _, arg := range os.Args {
+			log.Debugf("os.Args: %s", arg)
+		}
 		// 路径进行处理，兼容单元测试程序程序启动时的奇怪路径
 		pl, cl := len(project), len(curPath)
 		if pl != 0 && cl > pl && len(os.Args) > 1 && strings.HasPrefix(os.Args[1], "-test") {

@@ -31,7 +31,7 @@ Server:
         - "0012_,_你是个好人！"
 
 AuthClient:
-  StoreType: "mongo"              # 通过yaml文件来存储客户端配置信息，还支持mongo等
+  StoreType: "yaml"               # 通过yaml文件来存储客户端配置信息，还支持mongo等
   ReloadTicker: 5m                # 配置重新加载时间间隔
   YamlFilePath: "config/clients"  # auth yaml 配置文件的路径
   Mongo:

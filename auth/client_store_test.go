@@ -7,9 +7,11 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/hrygo/gosms/auth"
+	bs "github.com/hrygo/gosms/bootstrap"
 )
 
 func TestYamlStore_FindByCid(t *testing.T) {
+	auth.Cache = auth.New(bs.ConfigYml)
 	c := auth.Cache.FindByCid("CMPP", "123456")
 	assert.True(t, c != nil)
 	t.Logf("%#+v", c)

@@ -6,21 +6,19 @@ import (
 
 	"github.com/hrygo/log"
 	"gopkg.in/yaml.v3"
-
-	bs "github.com/hrygo/gosms/bootstrap"
 )
 
 type YamlStore storage
 
 func (y *YamlStore) Load() {
-	dir := bs.ConfigYml.GetString("AuthClient.YamlFilePath")
+	dir := y.config.GetString("AuthClient.YamlFilePath")
 	if "" == dir {
 		dir = "config/clients/"
 	}
 	if !strings.HasSuffix(dir, "/") {
 		dir += "/"
 	}
-	dir = bs.BasePath + dir
+	dir = y.config.BasePath() + dir
 	fs, err := ioutil.ReadDir(dir)
 	if err != nil {
 		log.Fatalf("Config file init error: %v", err)
