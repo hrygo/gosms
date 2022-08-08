@@ -71,7 +71,7 @@ Mongo:
   MaxPoolSize: 10
 ```
 
-同样，然后通过环境变量设置用户名密码
+同样，通过环境变量设置用户名密码
 
 ```bash
 export MONGO_USER=xxx
