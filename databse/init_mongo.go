@@ -20,6 +20,9 @@ type database struct {
 var Mongo *database
 
 func InitDB(config yaml_config.YmlConfig, prefix string) {
+	if "" == config.GetString(prefix+".URI") {
+		return
+	}
 	Mongo = &database{
 		Client: setConnect(config, prefix),
 		Config: config,

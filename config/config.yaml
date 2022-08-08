@@ -35,7 +35,7 @@ AuthClient:
   ReloadTicker: 5m                # 配置重新加载时间间隔
   YamlFilePath: "config/clients"  # auth yaml 配置文件的路径
   Mongo:
-    URI: "mongodb+srv://<user>:<passwd>@cluster0.ppiyq4w.mongodb.net/test"
+    #URI: "mongodb+srv://<user>:<passwd>@cluster0.ppiyq4w.mongodb.net/test"
     ConnectTimeout: 15s
     ReadTimeout: 15s
     WriteTimeout: 15s

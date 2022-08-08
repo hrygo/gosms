@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/hrygo/gosms/auth"
 	"github.com/hrygo/gosms/bootstrap"
 	sms "github.com/hrygo/gosms/client"
 )
@@ -13,7 +14,13 @@ import (
 var _ = bootstrap.BasePath
 
 func init() {
-	sms.PersistenceSmsJournal()
+	// 启动记录数据库的程序
+	if sms.Conf.GetString("Mongo.URI") != "" {
+		sms.PersistenceSmsJournal()
+	} else {
+		sms.StartCacheExpireTicker(nil)
+	}
+	auth.Cache = auth.New(bootstrap.ConfigYml)
 }
 
 func TestSend(t *testing.T) {

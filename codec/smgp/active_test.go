@@ -3,12 +3,19 @@ package smgp_test
 import (
 	"testing"
 
+	"github.com/hrygo/gosms/auth"
 	"github.com/hrygo/gosms/bootstrap"
 	"github.com/hrygo/gosms/codec"
 	"github.com/hrygo/gosms/codec/smgp"
 )
 
 var _ = bootstrap.BasePath
+var cli *auth.Client
+
+func init() {
+	auth.Cache = auth.New(bootstrap.ConfigYml)
+	cli = auth.Cache.FindByCid("smgp", "12345678")
+}
 
 func TestActiveTest(t *testing.T) {
 	at := smgp.NewActiveTest(uint32(codec.B32Seq.NextVal()))

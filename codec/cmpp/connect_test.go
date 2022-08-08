@@ -11,7 +11,12 @@ import (
 )
 
 var _ = bootstrap.BasePath
-var cli = auth.Cache.FindByCid("cmpp", "123456")
+var cli *auth.Client
+
+func init() {
+	auth.Cache = auth.New(bootstrap.ConfigYml)
+	cli = auth.Cache.FindByCid("cmpp", "123456")
+}
 
 func TestCmppConnect_Encode(t *testing.T) {
 	connect := NewConnect(cli, uint32(codec.B32Seq.NextVal()))

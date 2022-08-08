@@ -4,7 +4,7 @@ cache:
   handler-pool-size: 100       # 缓存过期检查间隔
 
 Mongo:
-  URI: "mongodb+srv://<user>:<passwd>@cluster0.ppiyq4w.mongodb.net/test"
+  #URI: "mongodb+srv://<user>:<passwd>@cluster0.ppiyq4w.mongodb.net/test"
   ConnectTimeout: 15s
   ReadTimeout: 15s
   WriteTimeout: 15s

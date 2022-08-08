@@ -1,4 +1,4 @@
-package smgp
+package smgp_test
 
 import (
 	"bytes"
@@ -7,25 +7,23 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/hrygo/gosms/auth"
 	"github.com/hrygo/gosms/codec"
+	"github.com/hrygo/gosms/codec/smgp"
 )
 
-var cli = auth.Cache.FindByCid("smgp", "12345678")
-
 func TestNewSubmit(t *testing.T) {
-	subs := NewSubmit(cli, []string{"17600001111", "17700001111"}, Poem, uint32(codec.B32Seq.NextVal()), MtOptions{AtTime: time.Now().Add(time.Minute)})
+	subs := smgp.NewSubmit(cli, []string{"17600001111", "17700001111"}, Poem, uint32(codec.B32Seq.NextVal()), smgp.MtOptions{AtTime: time.Now().Add(time.Minute)})
 	assert.True(t, len(subs) == 4)
 
 	for i, sub := range subs {
-		sub := sub.(*Submit)
+		sub := sub.(*smgp.Submit)
 		t.Logf("%+v", sub)
 		if i < 3 {
 			assert.True(t, int(sub.PacketLength) == 328)
-			assert.True(t, int(sub.msgLength) == 140)
-			assert.True(t, int(sub.msgLength) == len(sub.msgBytes))
+			assert.True(t, int(sub.MsgLength()) == 140)
+			assert.True(t, int(sub.MsgLength()) == len(sub.MsgBytes()))
 		} else {
-			assert.True(t, int(sub.msgLength) <= 140)
+			assert.True(t, int(sub.MsgLength()) <= 140)
 			assert.True(t, int(sub.PacketLength) > 147)
 		}
 	}
@@ -37,16 +35,16 @@ func TestSubmit_Encode(t *testing.T) {
 }
 
 func encode(t *testing.T, phones []string, txt string, l int) {
-	subs := NewSubmit(cli, phones, txt, uint32(codec.B32Seq.NextVal()), MtOptions{AtTime: time.Now().Add(time.Minute)})
+	subs := smgp.NewSubmit(cli, phones, txt, uint32(codec.B32Seq.NextVal()), smgp.MtOptions{AtTime: time.Now().Add(time.Minute)})
 	assert.True(t, len(subs) == l)
 
 	for _, sub := range subs {
-		sub := sub.(*Submit)
+		sub := sub.(*smgp.Submit)
 		t.Logf("%+v", sub)
 		dt := sub.Encode()
 		assert.True(t, int(sub.PacketLength) == len(dt))
 		t.Logf("%v: %x", int(sub.PacketLength) == len(dt), dt)
-		resp := sub.ToResponse(0).(*SubmitRsp)
+		resp := sub.ToResponse(0).(*smgp.SubmitRsp)
 		t.Logf("%s", resp)
 		dt = resp.Encode()
 		t.Logf("%v: %x", int(resp.PacketLength) == len(dt), dt)
@@ -59,17 +57,17 @@ func TestSubmit_Decode(t *testing.T) {
 }
 
 func decode(t *testing.T, phones []string, txt string, l int) {
-	subs := NewSubmit(cli, phones, txt, uint32(codec.B32Seq.NextVal()), MtOptions{AtTime: time.Now().Add(time.Minute)})
+	subs := smgp.NewSubmit(cli, phones, txt, uint32(codec.B32Seq.NextVal()), smgp.MtOptions{AtTime: time.Now().Add(time.Minute)})
 	assert.True(t, len(subs) == l)
 
 	for _, sub := range subs {
-		sub := sub.(*Submit)
+		sub := sub.(*smgp.Submit)
 		dt := sub.Encode()
 		assert.True(t, int(sub.PacketLength) == len(dt))
 		t.Logf("%s", sub)
 		t.Logf("%v: %x", int(sub.PacketLength) == len(dt), dt)
 
-		subDec := &Submit{}
+		subDec := &smgp.Submit{}
 		err := subDec.Decode(sub.SequenceId, dt[12:])
 		if err != nil {
 			t.Fail()
@@ -80,13 +78,13 @@ func decode(t *testing.T, phones []string, txt string, l int) {
 		t.Logf("%v: %x", int(subDec.PacketLength) == len(dt2), dt2)
 		assert.True(t, bytes.Equal(dt, dt2))
 
-		resp := subDec.ToResponse(0).(*SubmitRsp)
+		resp := subDec.ToResponse(0).(*smgp.SubmitRsp)
 		t.Logf("%s", resp)
 		dt = resp.Encode()
 		assert.True(t, int(resp.PacketLength) == len(dt))
 		t.Logf("%v: %x", int(resp.PacketLength) == len(dt), dt)
 
-		respDec := &SubmitRsp{}
+		respDec := &smgp.SubmitRsp{}
 		err = respDec.Decode(sub.SequenceId, dt[12:])
 		if err != nil {
 			t.Fail()
@@ -95,13 +93,13 @@ func decode(t *testing.T, phones []string, txt string, l int) {
 		t.Logf("%s", respDec)
 		assert.True(t, int(respDec.PacketLength) == len(dt))
 		t.Logf("%v: %x", int(respDec.PacketLength) == len(dt), dt)
-		assert.True(t, 0 == bytes.Compare(respDec.msgId, resp.msgId))
+		assert.True(t, 0 == bytes.Compare(respDec.MsgId(), resp.MsgId()))
 	}
 }
 
 func TestGbk(t *testing.T) {
-	gb, _ := GbEncoder.String(Poem)
-	gbDec, _ := GbDecoder.String(gb)
+	gb, _ := smgp.GbEncoder.String(Poem)
+	gbDec, _ := smgp.GbDecoder.String(gb)
 	t.Logf("Origin: %s", Poem)
 	t.Logf("GbStr : %s", gbDec)
 	t.Logf("Origin Hex: %x", Poem)

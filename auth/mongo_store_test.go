@@ -8,10 +8,21 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson"
 
+	"github.com/hrygo/gosms/bootstrap"
 	db "github.com/hrygo/gosms/databse"
 )
 
+var pass bool
+
+func init() {
+	db.InitDB(bootstrap.ConfigYml, "AuthClient.Mongo")
+	pass = db.Mongo == nil
+}
+
 func TestMongoStore_FindByCid(t *testing.T) {
+	if pass {
+		return
+	}
 	mcache := &MongoStore{cache: make(map[string]*Client)}
 	mcache.Load()
 
@@ -21,6 +32,10 @@ func TestMongoStore_FindByCid(t *testing.T) {
 
 // 将文件中的配置信息迁移到MongoDB中
 func TestMongoStore_Load(t *testing.T) {
+	if pass {
+		return
+	}
+
 	TestDeleteAll(t)
 	cache := &YamlStore{cache: make(map[string]*Client)}
 	cache.Load()
@@ -36,6 +51,10 @@ func TestMongoStore_Load(t *testing.T) {
 }
 
 func TestDeleteAll(t *testing.T) {
+	if pass {
+		return
+	}
+
 	coll := db.Mongo.Client.Database(dbname).Collection(collection)
 	rod := db.Mongo.Config.GetDuration(db.Mongo.Prefix + ".ReadTimeout")
 	ctx, cancel := context.WithTimeout(context.Background(), rod)
