@@ -5,6 +5,7 @@
 从源码构建并启动
 
 ```bash
+# 修改 .env 文件中的 GOARCH 为目标平台的 CPU 架构. 常用的值 amd64, arm64, i386, armhf等
 # 构建服务端
 make linux
 # make darwin
