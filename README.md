@@ -61,6 +61,9 @@ make mongo
 ```yaml
 AuthClient:
   StoreType: "yml"
+
+Mongo:
+  URI: ""
 ````
 
 ### 采用mongodb存储客户端消息发送记录
