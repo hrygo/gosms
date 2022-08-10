@@ -1,6 +1,6 @@
 # gosms golang开发的短信网关
 
-## Quick Start
+## 1.Quick Start
 
 从源码构建并启动
 
@@ -26,9 +26,9 @@ cd cli
 # -i 迭代次数
 ```
 
-### 采用mongodb存储客户端认证配置
+### 1.1 采用mongodb存储客户端认证配置
 
-1、修改配置文件 /config/config.yaml
+A.修改配置文件 /config/config.yaml
 
 ```yaml
 AuthClient:
@@ -43,20 +43,20 @@ Mongo:
   MaxPoolSize: 10
 ```
 
-2、然后通过环境变量设置用户名密码
+B.然后通过环境变量设置用户名密码
 
 ```bash
 export MONGO_USER=xxx
 export MONGO_PASSWD=xxx
 ```
 
-3、初始化mongodb数据
+C.初始化mongodb数据
 
 ```bash
 make mongo
 ```
 
-4、如果不启用MongoDB，需设置
+D.如果不启用MongoDB，需设置
 
 ```yaml
 AuthClient:
@@ -66,10 +66,10 @@ Mongo:
   URI: ""
 ````
 
-### 采用mongodb存储客户端消息发送记录
+### 1.2 采用mongodb存储客户端消息发送记录
 
 同上，修改smc_client对应的配置文件。如果不启用MongoDB，不设置 `Mongo.URI` 即可。
 
-## 功能及原理说明
+## 2.功能及原理说明
 
 TODO 其他说明文档待补充
