@@ -28,7 +28,7 @@ cd cli
 
 ## 采用mongodb存储客户端认证配置
 
-A.修改配置文件 /config/config.yaml
+**1.修改配置文件 /config/config.yaml**
 
 ```yaml
 AuthClient:
@@ -43,20 +43,20 @@ Mongo:
   MaxPoolSize: 10
 ```
 
-B.然后通过环境变量设置用户名密码
+**2.然后通过环境变量设置用户名密码**
 
 ```bash
 export MONGO_USER=xxx
 export MONGO_PASSWD=xxx
 ```
 
-C.初始化mongodb数据
+**3.初始化mongodb数据**
 
 ```bash
 make mongo
 ```
 
-D.如果不启用MongoDB，需设置
+**4.如果不启用MongoDB，需设置**
 
 ```yaml
 AuthClient:
