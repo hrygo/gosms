@@ -1,6 +1,6 @@
-# gosms golang开发的短信网关
+# GOSMS
 
-## 1.Quick Start
+## Quick Start
 
 从源码构建并启动
 
@@ -26,7 +26,7 @@ cd cli
 # -i 迭代次数
 ```
 
-### 1.1 采用mongodb存储客户端认证配置
+## 采用mongodb存储客户端认证配置
 
 A.修改配置文件 /config/config.yaml
 
@@ -66,10 +66,10 @@ Mongo:
   URI: ""
 ````
 
-### 1.2 采用mongodb存储客户端消息发送记录
+## 采用mongodb存储客户端消息发送记录
 
 同上，修改smc_client对应的配置文件。如果不启用MongoDB，不设置 `Mongo.URI` 即可。
 
-## 2.功能及原理说明
+## 功能及原理说明
 
 TODO 其他说明文档待补充
