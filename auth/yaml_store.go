@@ -11,14 +11,14 @@ import (
 type YamlStore storage
 
 func (y *YamlStore) Load() {
-	dir := y.config.GetString("AuthClient.YamlFilePath")
+	dir := y.Config.GetString("AuthClient.YamlFilePath")
 	if "" == dir {
-		dir = "config/clients/"
+		dir = "Config/yml_store/"
 	}
 	if !strings.HasSuffix(dir, "/") {
 		dir += "/"
 	}
-	dir = y.config.BasePath() + dir
+	dir = y.Config.BasePath() + dir
 	fs, err := ioutil.ReadDir(dir)
 	if err != nil {
 		log.Fatalf("Config file init error: %v", err)
@@ -52,7 +52,7 @@ func (y *YamlStore) Load() {
 func (y *YamlStore) FindByCid(isp string, cid string) *Client {
 	y.Lock()
 	defer y.Unlock()
-	client := y.cache[strings.ToLower(isp)+"_"+cid]
+	client := y.Cache[strings.ToLower(isp)+"_"+cid]
 	return client
 }
 
@@ -66,6 +66,6 @@ func unmarshal(data []byte, id string, y *YamlStore) {
 		log.Errorf("Config file init error: %v", err)
 	} else {
 		cli.ISP = id[0:4]
-		y.cache[id] = cli
+		y.Cache[id] = cli
 	}
 }

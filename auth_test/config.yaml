@@ -1,0 +1,12 @@
+AuthClient:
+  StoreType: "mongo"         # 通过yaml文件来存储客户端配置信息，还支持mongo等
+  ReloadTicker: 5m           # 配置重新加载时间间隔
+  YamlFilePath: "yml_store"  # auth yaml 配置文件的路径
+Mongo:
+  URI: "mongodb+srv://<user>:<passwd>@cluster0.ppiyq4w.mongodb.net/test"
+  ConnectTimeout: 15s
+  ReadTimeout: 15s
+  WriteTimeout: 15s
+  HeartbeatInterval: 60s
+  MinPoolSize: 2
+  MaxPoolSize: 10

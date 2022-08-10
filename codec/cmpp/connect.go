@@ -9,7 +9,6 @@ import (
 
 	"github.com/hrygo/log"
 
-	"github.com/hrygo/gosms/auth"
 	"github.com/hrygo/gosms/codec"
 	"github.com/hrygo/gosms/utils"
 )
@@ -37,19 +36,19 @@ type ConnectResp struct {
 	Version           Version    // 版本，1字节
 }
 
-func NewConnect(cl *auth.Client, seq uint32) *Connect {
+func NewConnect(ac *codec.AuthConf, seq uint32) *Connect {
 	con := &Connect{}
 	con.TotalLength = ConnectPktLen
 	con.CommandId = CMPP_CONNECT
 	con.SequenceId = seq
-	con.Version = Version(cl.Version)
-	con.sourceAddr = cl.ClientId
+	con.Version = Version(ac.Version)
+	con.sourceAddr = ac.ClientId
 	var ts string
 	ts, con.timestamp = utils.Now()
 	authMd5 := md5.Sum(bytes.Join([][]byte{
-		[]byte(cl.ClientId),
+		[]byte(ac.ClientId),
 		make([]byte, 9),
-		[]byte(cl.SharedSecret),
+		[]byte(ac.SharedSecret),
 		[]byte(ts),
 	}, nil))
 	con.authenticatorSource = authMd5[:]
@@ -89,26 +88,26 @@ func (c *Connect) Log() []log.Field {
 	return ls
 }
 
-func (c *Connect) Check(cli *auth.Client) ConnStatus {
-	if cli == nil {
+func (c *Connect) Check(ac *codec.AuthConf) ConnStatus {
+	if ac == nil {
 		return ConnStatusInvalidSrcAddr
 	}
-	if !c.Version.MajorMatch(cli.Version) {
+	if !c.Version.MajorMatch(ac.Version) {
 		return ConnStatusVerTooHigh
 	}
 
 	authSource := c.authenticatorSource
 	authMd5 := md5.Sum(bytes.Join([][]byte{
-		[]byte(cli.ClientId),
+		[]byte(ac.ClientId),
 		make([]byte, 9),
-		[]byte(cli.SharedSecret),
+		[]byte(ac.SharedSecret),
 		[]byte(utils.TimeStamp2Str(c.timestamp)),
 	}, nil))
 	log.Debugf("[AuthCheck] input  : %x", authSource)
 	log.Debugf("[AuthCheck] compute: %x", authMd5)
 	ok := bytes.Equal(authSource, authMd5[:])
 	if ok {
-		c.SetSecret(cli.SharedSecret)
+		c.SetSecret(ac.SharedSecret)
 		return ConnStatusOK
 	}
 	return ConnStatusAuthFailed

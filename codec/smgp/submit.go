@@ -6,10 +6,10 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/hrygo/log"
 
-	"github.com/hrygo/gosms/auth"
 	"github.com/hrygo/gosms/codec"
 	"github.com/hrygo/gosms/utils"
 )
@@ -51,18 +51,18 @@ type SubmitRsp struct {
 
 const MtBaseLen = 126
 
-func NewSubmit(cli *auth.Client, phones []string, content string, seq uint32, options MtOptions) (messages []codec.RequestPdu) {
-	mt := &Submit{Version: Version(cli.Version)}
+func NewSubmit(ac *codec.AuthConf, phones []string, content string, seq uint32, options ...codec.OptionFunc) (messages []codec.RequestPdu) {
+	mt := &Submit{Version: Version(ac.Version)}
 	mt.PacketLength = MtBaseLen
 	mt.RequestId = SMGP_SUBMIT
 	mt.SequenceId = seq
-	mt.SetOptions(cli, options)
+	mt.SetOptions(ac, codec.LoadMtOptions(options...))
 	mt.msgType = 6
 	// 从配置文件设置属性
-	mt.feeType = cli.FeeType
-	mt.feeCode = cli.FeeCode
-	mt.chargeTermID = cli.FeeTerminalId
-	mt.fixedFee = cli.FixedFee
+	mt.feeType = ac.FeeType
+	mt.feeCode = ac.FeeCode
+	mt.chargeTermID = ac.FeeTerminalId
+	mt.fixedFee = ac.FixedFee
 	// 初步设置入参
 	mt.destTermID = phones
 	mt.destTermIDCount = byte(len(phones))
@@ -370,4 +370,40 @@ func (r *SubmitRsp) MsgId() []byte {
 
 func (r *SubmitRsp) Status() Status {
 	return r.status
+}
+
+func (s *Submit) SetOptions(ac *codec.AuthConf, options *codec.MtOptions) {
+	s.needReport = ac.NeedReport
+	// 有点小bug，不能通过传参的方式设置未变量的"零值"
+	if options.NeedReport != 0 {
+		s.needReport = options.NeedReport
+	}
+
+	s.priority = ac.DefaultMsgLevel
+	// 有点小bug，不能通过传参的方式设置未变量的"零值"
+	if options.MsgLevel != 0 {
+		s.priority = options.MsgLevel
+	}
+
+	s.serviceID = ac.ServiceId
+	if options.ServiceId != "" {
+		s.serviceID = options.ServiceId
+	}
+
+	if options.AtTime != "" {
+		s.atTime = options.AtTime
+	}
+
+	vt := time.Now()
+	if options.ValidTime != "" {
+		s.validTime = options.ValidTime
+	} else {
+		vt.Add(ac.MtValidDuration)
+	}
+	s.validTime = utils.FormatTime(vt)
+
+	s.srcTermID = ac.SmsDisplayNo
+	if options.SrcId != "" {
+		s.srcTermID += options.SrcId
+	}
 }

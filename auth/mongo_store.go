@@ -7,18 +7,18 @@ import (
 	"github.com/hrygo/log"
 	"go.mongodb.org/mongo-driver/bson"
 
-	db "github.com/hrygo/gosms/databse"
+	db "github.com/hrygo/gosms/database/mongodb"
 )
 
 const (
-	dbname     = "smsdb"
-	collection = "authenticatedClients"
+	DBN        = "smsdb"
+	Collection = "authenticatedClients"
 )
 
 type MongoStore storage
 
 func (m *MongoStore) Load() {
-	coll := db.Mongo.Client.Database(dbname).Collection(collection)
+	coll := db.Mongo.Client.Database(DBN).Collection(Collection)
 	rod := db.Mongo.Config.GetDuration(db.Mongo.Prefix + ".ReadTimeout")
 	ctx, cancel := context.WithTimeout(context.Background(), rod)
 	defer cancel()
@@ -37,13 +37,13 @@ func (m *MongoStore) Load() {
 		if err != nil {
 			return
 		}
-		m.cache[c.ISP+"_"+c.ClientId] = c
+		m.Cache[c.ISP+"_"+c.ClientId] = c
 	}
 }
 
 func (m *MongoStore) FindByCid(isp string, cid string) (c *Client) {
 	m.Lock()
 	defer m.Unlock()
-	client := m.cache[strings.ToLower(isp)+"_"+cid]
+	client := m.Cache[strings.ToLower(isp)+"_"+cid]
 	return client
 }

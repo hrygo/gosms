@@ -7,7 +7,7 @@ import (
 	"github.com/hrygo/log"
 	"github.com/hrygo/yaml_config"
 
-	db "github.com/hrygo/gosms/databse"
+	db "github.com/hrygo/gosms/database/mongodb"
 )
 
 type Store interface {
@@ -24,22 +24,22 @@ var Cache Store
 
 type storage struct {
 	sync.Mutex
-	cache  map[string]*Client
-	config yaml_config.YmlConfig
+	Cache  map[string]*Client
+	Config yaml_config.YmlConfig
 }
 
 func New(c yaml_config.YmlConfig) (cache Store) {
 	st := c.GetString("AuthClient.StoreType")
 	if "" == st || "yaml" == st || "yml" == st {
 		cache = &YamlStore{
-			config: c,
-			cache:  make(map[string]*Client),
+			Config: c,
+			Cache:  make(map[string]*Client),
 		}
 	} else if "mongo" == st {
-		db.InitDB(c, "AuthClient.Mongo")
+		db.InitDB(c, "Mongo")
 		cache = &MongoStore{
-			config: c,
-			cache:  make(map[string]*Client),
+			Config: c,
+			Cache:  make(map[string]*Client),
 		}
 	}
 	// 初次加载存储

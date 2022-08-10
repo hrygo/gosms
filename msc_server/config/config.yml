@@ -1,0 +1,84 @@
+AppDebug: true   # 设置程序所处的模式，debug=true 调试模式，日志优先显示在控制台，debug=false 非调试模式，将写入日志文件
+
+Server:
+  TickDuration: 10s           #定时器执行间隔
+  ForceCloseConnTime: 5m      #一个连接5分钟不产生有效数据，将被强制关闭
+  CMPP: #移动网关配置信息
+    Port: 10086               #CMPP服务 端口
+    Multicore: true           #CMPP服务 是否开启多核
+    MaxSessions: 32            #CMPP服务 服务可承载最大会话数（已）
+  SGIP: #联通网关配置信息
+    Port: 10010
+    Multicore: true
+    MaxSessions: 32
+  SMGP: #电信网关配置信息
+    Port: 10000
+    Multicore: true
+    MaxSessions: 32
+  Pprof: #pprof debug 定义
+    Enable: true
+    Port: 10088
+  Mock: #模拟器参数
+    SuccessRate: 0.96      # 成功率，非成功的返回状态码非0
+    MinSubmitRespMs: 1     # Mt响应的最小时间
+    MaxSubmitRespMs: 3     # Mt响应的最大时间
+    FixReportRespMs: 5     # 状态报告在fix-report-resp-ms后发送
+    Delivery: # 模拟上行短信配置
+      Enable: true
+      Contents:
+        - "0010_,_hello world" # 上行消息的子号码及内容用,用 "_,_" 分隔
+        - "0011_,_TD"
+        - "0012_,_你是个好人！"
+
+AuthClient:
+  StoreType: "mongo"                # 通过yaml文件来存储客户端配置信息，还支持mongo等
+  ReloadTicker: 5m                  # 配置重新加载时间间隔
+  YamlFilePath: "config/yml_store"  # auth yaml 配置文件的路径
+
+Mongo:
+  URI: "mongodb+srv://<user>:<passwd>@cluster0.ppiyq4w.mongodb.net/test"
+  ConnectTimeout: 15s
+  ReadTimeout: 15s
+  WriteTimeout: 15s
+  HeartbeatInterval: 60s
+  MinPoolSize: 2
+  MaxPoolSize: 10
+
+Snowflake: # 类雪花算法序号生成器配置
+  B64:
+    DC: 0         # 3bits 0-7
+    Worker: 127   # 7bits 0-127
+  B32:
+    DC: 0         # 2bits 0-3
+    Worker: 7     # 3bits 0-7
+  BCD: 010203     # 3字节（BCD 码，取值 6位十进制数）
+
+Logs:
+  Default: # 默认的全部日志
+    LogName: "logs/gosms.log"
+    Level: 0                              #debug=-1, info=0, warn=1, error=2, panic=3,4, fatal=5
+    TextFormat: "json"                    #记录日志的格式，参数选项：console、json, console 表示一般的文本格式
+    TimePrecision: "millisecond"          #记录日志时，相关的时间精度，该参数选项：second、millisecond ，分别表示 秒 和 毫秒 ,默认为毫秒级别
+    MaxSize: 10                           #每个日志的最大尺寸(以MB为单位），超过该值，系统将会自动进行切割
+    MaxBackups: 100                       #保留旧日志最大个数
+    MaxAge: 30                            #保留旧日志最大天数
+    Compress: false                       #日志备份时，是否进行压缩
+  Error: # 仅Warn以上级别日志
+    Level: 1
+    LogName: "logs/error.log"
+    TextFormat: "console"
+    TimePrecision: "millisecond"
+    MaxSize: 1
+    MaxBackups: 7
+    MaxAge: 15
+    Compress: false
+  CounterDB: # 存储消息计数数据（模拟数据库）
+    Level: -1
+    LogName: "logs/counter/db.json"
+    TextFormat: "json"
+    TimePrecision: "millisecond"
+    MaxSize: 1
+    MaxBackups: 10240
+    MaxAge: 10240
+    Compress: false
+

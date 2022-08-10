@@ -1,0 +1,80 @@
+AppDebug: true   # 设置程序所处的模式，debug=true 调试模式，日志优先显示在控制台，debug=false 非调试模式，将写入日志文件
+
+PoolSize: 100    # goroutine pool size
+
+Cache:
+  expire-time: 10s             # 缓存在内存存储的过期时间
+  expire-check-duration: 1s    # 缓存过期检查间隔
+
+AuthClient:
+  StoreType: "mongo"                # 通过yaml文件来存储客户端配置信息，还支持mongo等
+  ReloadTicker: 5m                  # 配置重新加载时间间隔
+  YamlFilePath: "config/yml_store"  # auth yaml 配置文件的路径
+
+Mongo:
+  URI: "mongodb+srv://<user>:<passwd>@cluster0.ppiyq4w.mongodb.net/test"
+  ConnectTimeout: 15s
+  ReadTimeout: 15s
+  WriteTimeout: 15s
+  HeartbeatInterval: 60s
+  MinPoolSize: 2
+  MaxPoolSize: 10
+
+# 移动
+cmpp:
+  client-id: "123456"
+  address: "127.0.0.1:10086"
+  segment: "^1(((3[56789]|47|5[012789]|65|7[28]|8[23478]|9[578])[0-9])|34[0-8]|705)[0-9]{7}$"
+  max-conns: 4                      # 最大连接数
+  mt-window-size: 16                # 接收窗口大小, 服务端分配, 用于限制未得到响应的消息的最大数量
+  throughput: 1000                  # 最大吞吐, 单位tps, 服务端分配, 用于限制系统吞吐
+  tick-duration: 1s                 # 定时器调度间隔
+
+# 联通
+sgip:
+  client-id: "123456"
+  address: "127.0.0.1:10010"
+  segment: "^1(((3[012]|4[56]|5[56]|6[67]|7[156]|8[56]|9[6])[0-9])|709)[0-9]{7}$"
+  max-conns: 4
+  mt-window-size: 16
+  throughput: 1000
+  tick-duration: 1s
+
+# 电信
+smgp:
+  client-id: "12345678"
+  address: "127.0.0.1:10000"
+  segment: "^1(((33|49|53|62|7[347]|8[019]|9[139])[0-9])|349|700)[0-9]{7}$"
+  max-conns: 4
+  mt-window-size: 16
+  throughput: 1000
+  tick-duration: 1s
+
+Snowflake: # 类雪花算法序号生成器配置
+  B64:
+    DC: 0         # 3bits 0-7
+    Worker: 127   # 7bits 0-127
+  B32:
+    DC: 0         # 2bits 0-3
+    Worker: 7     # 3bits 0-7
+  BCD: 010203     # 3字节（BCD 码，取值 6位十进制数）
+
+Logs:
+  Default: # 默认的全部日志
+    LogName: "logs/sms.log"
+    Level: 0                              #debug=-1, info=0, warn=1, error=2, panic=3,4, fatal=5
+    TextFormat: "json"                    #记录日志的格式，参数选项：console、json, console 表示一般的文本格式
+    TimePrecision: "millisecond"          #记录日志时，相关的时间精度，该参数选项：second、millisecond ，分别表示 秒 和 毫秒 ,默认为毫秒级别
+    MaxSize: 10                           #每个日志的最大尺寸(以MB为单位），超过该值，系统将会自动进行切割
+    MaxBackups: 100                       #保留旧日志最大个数
+    MaxAge: 30                            #保留旧日志最大天数
+    Compress: false                       #日志备份时，是否进行压缩
+  Error: # 仅Warn以上级别日志
+    Level: 1
+    LogName: "logs/error.log"
+    TextFormat: "console"
+    TimePrecision: "millisecond"
+    MaxSize: 1
+    MaxBackups: 7
+    MaxAge: 15
+    Compress: false

@@ -9,7 +9,6 @@ import (
 
 	"github.com/hrygo/log"
 
-	"github.com/hrygo/gosms/auth"
 	"github.com/hrygo/gosms/codec"
 	"github.com/hrygo/gosms/utils"
 )
@@ -42,9 +41,9 @@ type DeliverRsp struct {
 	Version Version
 }
 
-func NewDeliver(cli *auth.Client, phone string, destNo string, txt string, seq uint32) codec.RequestPdu {
+func NewDeliver(ac *codec.AuthConf, phone string, destNo string, txt string, seq uint32) codec.RequestPdu {
 	baseLen := uint32(89)
-	dlv := &Delivery{Version: Version(cli.Version)}
+	dlv := &Delivery{Version: Version(ac.Version)}
 	dlv.RequestId = SMGP_DELIVER
 	dlv.SequenceId = seq
 	dlv.msgId = codec.BcdSeq.NextVal()
@@ -52,7 +51,7 @@ func NewDeliver(cli *auth.Client, phone string, destNo string, txt string, seq u
 	dlv.msgFormat = 15
 	dlv.recvTime = time.Now().Format("20060102150405")
 	dlv.srcTermID = phone
-	dlv.destTermID = cli.SmsDisplayNo + destNo
+	dlv.destTermID = ac.SmsDisplayNo + destNo
 	// 上行最长70字符
 	subTxt := txt
 	rs := []rune(txt)
@@ -69,9 +68,9 @@ func NewDeliver(cli *auth.Client, phone string, destNo string, txt string, seq u
 	return dlv
 }
 
-func NewDeliveryReport(cli *auth.Client, mt *Submit, seq uint32, msgId []byte) *Delivery {
+func NewDeliveryReport(ac *codec.AuthConf, mt *Submit, seq uint32, msgId []byte) *Delivery {
 	baseLen := uint32(89)
-	dlv := &Delivery{Version: Version(cli.Version)}
+	dlv := &Delivery{Version: Version(ac.Version)}
 	dlv.RequestId = SMGP_DELIVER
 	dlv.SequenceId = seq
 	dlv.msgId = codec.BcdSeq.NextVal()

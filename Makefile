@@ -1,12 +1,12 @@
 -include .env
 
 PUBLISH="$(shell pwd)/publish"
-BUILD_DIR="./cmd/server"
+BUILD_DIR="./msc_server/cmd"
 
 # Setup the -ldflags option for go build here, interpolate the variable values
 LDFLAGS = -ldflags "-s -w"
 
-.PHONY: help linux darwin windows format clean prepare
+.PHONY: help linux darwin windows format clean mongo prepare
 
 all: help
 
@@ -28,9 +28,9 @@ windows: prepare
 	GOOS=windows GOARCH=${GOARCH} go build ${LDFLAGS} -trimpath -o ${PUBLISH}/${BINARY}-windows-${GOARCH}.exe . ; \
 	cd - >/dev/null
 
-## client: Build client for your current platform
+## client: Compile client binary for your current platform
 client: prepareC
-	@cd ./cmd/client ; \
+	@cd ./msc_client/cmd ; \
 	go build ${LDFLAGS} -trimpath -o ${PUBLISH}/cli/smscli . ; \
 	cd - >/dev/null
 
@@ -40,15 +40,21 @@ format:
 	go fmt $$(go list ./... | grep -v /vendor/) ; \
 	cd - >/dev/null
 
+## mongo: init mongodb
+mongo:
+	@cd ./auth_test ; \
+	go test -v -run TestMongoStore_Load ./; \
+	echo "Please set AuthClient.StoreType to \"mongo\" and set Mongo.URI in the config file." ; \
+	cd - >/dev/null
 
 prepare:
 	@mkdir -p ${PUBLISH} ; \
-	cp -rf config ${PUBLISH} ; \
+	cp -rf msc_server/config ${PUBLISH} ; \
 	cp -rf ./shells/*.sh ${PUBLISH}
 
 prepareC:
 	@mkdir -p ${PUBLISH}/cli ; \
-	cp -rf config ${PUBLISH}/cli ; \
+	cp -rf msc_client/config ${PUBLISH}/cli ; \
 	cp -rf ./shells/cstart.sh ${PUBLISH}/cli
 
 clean:
@@ -56,8 +62,6 @@ clean:
 	@rm -rf ${PUBLISH}
 
 help: Makefile
-	@echo
-	@echo " Choose a command run in "$(BUILD_DIR)":"
 	@echo
 	@sed -n 's/^##//p' $< | column -t -s ':' |  sed -e 's/^/ /'
 	@echo

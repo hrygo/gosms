@@ -9,7 +9,6 @@ import (
 
 	"github.com/hrygo/log"
 
-	"github.com/hrygo/gosms/auth"
 	"github.com/hrygo/gosms/codec"
 	"github.com/hrygo/gosms/utils"
 )
@@ -51,22 +50,22 @@ type Submit struct {
 	Version Version
 }
 
-func NewSubmit(cli *auth.Client, phones []string, content string, seq uint32, opts ...Option) (messages []codec.RequestPdu) {
-	options := loadOptions(opts...)
+func NewSubmit(ac *codec.AuthConf, phones []string, content string, seq uint32, opts ...codec.OptionFunc) (messages []codec.RequestPdu) {
+	options := codec.LoadMtOptions(opts...)
 	baseLen := 138
-	if V30.MajorMatch(cli.Version) {
+	if V30.MajorMatch(ac.Version) {
 		baseLen = 163
 	}
 	header := MessageHeader{TotalLength: uint32(baseLen), CommandId: CMPP_SUBMIT, SequenceId: seq}
-	mt := &Submit{MessageHeader: header, Version: Version(cli.Version)}
+	mt := &Submit{MessageHeader: header, Version: Version(ac.Version)}
 
-	setOptions(cli, mt, options)
+	setOptions(ac, mt, options)
 	mt.msgFmt = MsgFmt(content)
 
 	mt.destUsrTl = uint8(len(phones))
 	mt.destTerminalId = strings.Join(phones, ",")
 	idLen := 21
-	if V30.MajorMatch(cli.Version) {
+	if V30.MajorMatch(ac.Version) {
 		idLen = 32
 	}
 	termIds := make([]byte, idLen*int(mt.destUsrTl))
@@ -75,7 +74,7 @@ func NewSubmit(cli *auth.Client, phones []string, content string, seq uint32, op
 	}
 	mt.termIds = termIds
 
-	mt.msgSrc = cli.SmsDisplayNo
+	mt.msgSrc = ac.SmsDisplayNo
 
 	mt.msgContent = content
 	slices := MsgSlices(mt.msgFmt, content)
@@ -532,35 +531,35 @@ func (r *SubmitRsp) Result() uint32 {
 }
 
 // 设置可选项
-func setOptions(cli *auth.Client, sub *Submit, opts *MtOptions) {
+func setOptions(ac *codec.AuthConf, sub *Submit, opts *codec.MtOptions) {
 	if opts.FeeUsertype != uint8(0xf) {
 		sub.feeUsertype = opts.FeeUsertype
 	} else {
-		sub.feeUsertype = cli.FeeUserType
+		sub.feeUsertype = ac.FeeUserType
 	}
 
 	if opts.MsgLevel != uint8(0xf) {
 		sub.msgLevel = opts.MsgLevel
 	} else {
-		sub.msgLevel = cli.DefaultMsgLevel
+		sub.msgLevel = ac.DefaultMsgLevel
 	}
 
-	if opts.RegisteredDel != uint8(0xf) {
-		sub.registeredDel = opts.RegisteredDel
+	if opts.NeedReport != uint8(0xf) {
+		sub.registeredDel = opts.NeedReport
 	} else {
-		sub.registeredDel = cli.NeedReport
+		sub.registeredDel = ac.NeedReport
 	}
 
 	if opts.FeeTerminalType != uint8(0xf) {
 		sub.feeTerminalType = opts.FeeTerminalType
 	} else {
-		sub.feeTerminalType = cli.FeeTerminalType
+		sub.feeTerminalType = ac.FeeTerminalType
 	}
 
 	if opts.FeeType != "" {
 		sub.feeType = opts.FeeType
 	} else {
-		sub.feeType = cli.FeeType
+		sub.feeType = ac.FeeType
 	}
 
 	if opts.AtTime != "" {
@@ -570,38 +569,37 @@ func setOptions(cli *auth.Client, sub *Submit, opts *MtOptions) {
 	if opts.ValidTime != "" {
 		sub.validTime = opts.ValidTime
 	} else {
-		t := time.Now().Add(cli.MtValidDuration)
-		s := t.Format("060102150405")
-		sub.validTime = s + "032+"
+		t := time.Now().Add(ac.MtValidDuration)
+		sub.validTime = utils.FormatTime(t)
 	}
 
 	if opts.FeeCode != "" {
 		sub.feeCode = opts.FeeCode
 	} else {
-		sub.feeCode = cli.FeeCode
+		sub.feeCode = ac.FeeCode
 	}
 
 	if opts.FeeTerminalId != "" {
 		sub.feeTerminalId = opts.FeeTerminalId
 	} else {
-		sub.feeTerminalId = cli.FeeTerminalId
+		sub.feeTerminalId = ac.FeeTerminalId
 	}
 
 	if opts.SrcId != "" {
 		sub.srcId = opts.SrcId
 	} else {
-		sub.srcId = cli.SmsDisplayNo
+		sub.srcId = ac.SmsDisplayNo
 	}
 
 	if opts.ServiceId != "" {
 		sub.serviceId = opts.ServiceId
 	} else {
-		sub.serviceId = cli.ServiceId
+		sub.serviceId = ac.ServiceId
 	}
 
 	if opts.LinkID != "" {
 		sub.linkID = opts.LinkID
 	} else {
-		sub.linkID = cli.LinkId
+		sub.linkID = ac.LinkId
 	}
 }

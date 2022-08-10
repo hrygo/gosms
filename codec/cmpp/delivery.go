@@ -7,7 +7,6 @@ import (
 
 	"github.com/hrygo/log"
 
-	"github.com/hrygo/gosms/auth"
 	"github.com/hrygo/gosms/codec"
 	"github.com/hrygo/gosms/utils"
 )
@@ -34,8 +33,8 @@ type Delivery struct {
 	Version Version
 }
 
-func NewDelivery(cli *auth.Client, phone, msg, dest, serviceId string, seq uint32) codec.RequestPdu {
-	dly := &Delivery{Version: Version(cli.Version)}
+func NewDelivery(ac *codec.AuthConf, phone, msg, dest, serviceId string, seq uint32) codec.RequestPdu {
+	dly := &Delivery{Version: Version(ac.Version)}
 	dly.CommandId = CMPP_DELIVER
 	dly.SequenceId = seq
 	dly.srcTerminalId = phone
@@ -46,15 +45,15 @@ func NewDelivery(cli *auth.Client, phone, msg, dest, serviceId string, seq uint3
 	if dest != "" {
 		dly.destId = dest
 	} else {
-		dly.destId = cli.SmsDisplayNo
+		dly.destId = ac.SmsDisplayNo
 	}
 	if serviceId != "" {
 		dly.serviceId = serviceId
 	} else {
-		dly.serviceId = cli.ServiceId
+		dly.serviceId = ac.ServiceId
 	}
 	baseLen := uint32(85)
-	if V30.MajorMatch(cli.Version) {
+	if V30.MajorMatch(ac.Version) {
 		baseLen = 109
 	}
 	dly.TotalLength = baseLen + uint32(dly.msgLength)

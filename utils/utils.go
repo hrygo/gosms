@@ -6,27 +6,18 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
-	"unsafe"
 
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/encoding/unicode"
 	"golang.org/x/text/transform"
 )
 
-var ErrInvalidUtf8Rune = errors.New("Not Invalid Utf8 runes")
-
-func IsBigEndian() bool {
-	var i uint16 = 0x1234
-	var p = (*[2]byte)(unsafe.Pointer(&i))
-	if (*p)[0] == 0x12 {
-		return true
-	}
-	return false
-}
+var ErrInvalidUtf8Rune = errors.New("not invalid utf-8 runes")
 
 func Now() (string, uint32) {
 	s := time.Now().Format("0102150405")
@@ -210,4 +201,35 @@ func RandNum(min, max int) int {
 // DiceCheck 投概率骰子，得到结果比给定数字大则返回true，否则返回false
 func DiceCheck(prob float64) bool {
 	return float64(rand.Intn(10000))/10000.0 > prob
+}
+
+// StructCopy 采用反射拷贝结构体属性
+func StructCopy(from, to any) {
+	fromValue := reflect.ValueOf(from)
+	toValue := reflect.ValueOf(to)
+
+	// 必须是指针类型
+	if fromValue.Kind() != reflect.Ptr || toValue.Kind() != reflect.Ptr {
+		return
+	}
+	// 均不可为空
+	if fromValue.IsNil() || toValue.IsNil() {
+		return
+	}
+
+	// 获取到来源数据
+	fromElem := fromValue.Elem()
+	// 需要的数据
+	toElem := toValue.Elem()
+
+	for i := 0; i < toElem.NumField(); i++ {
+		toField := toElem.Type().Field(i)
+
+		// 看看来源的结构体中是否有这个属性
+		fromFieldName, ok := fromElem.Type().FieldByName(toField.Name)
+		// 存在相同的属性名称并且类型一致
+		if ok && fromFieldName.Type == toField.Type {
+			toElem.Field(i).Set(fromElem.FieldByName(toField.Name))
+		}
+	}
 }

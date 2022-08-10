@@ -9,7 +9,6 @@ import (
 
 	"github.com/hrygo/log"
 
-	"github.com/hrygo/gosms/auth"
 	"github.com/hrygo/gosms/codec"
 	"github.com/hrygo/gosms/utils"
 )
@@ -38,23 +37,23 @@ type LoginRsp struct {
 	Version             Version // 版本，1字节
 }
 
-func NewLogin(cl *auth.Client, seq uint32) *Login {
+func NewLogin(ac *codec.AuthConf, seq uint32) *Login {
 	lo := &Login{}
 	lo.PacketLength = LoginLen
 	lo.RequestId = SMGP_LOGIN
 	lo.SequenceId = seq
-	lo.clientID = cl.ClientId
+	lo.clientID = ac.ClientId
 	lo.loginMode = 2
 	var ts string
 	ts, lo.timestamp = utils.Now()
 	authMd5 := md5.Sum(bytes.Join([][]byte{
-		[]byte(cl.ClientId),
+		[]byte(ac.ClientId),
 		make([]byte, 7),
-		[]byte(cl.SharedSecret),
+		[]byte(ac.SharedSecret),
 		[]byte(ts),
 	}, nil))
 	lo.authenticatorClient = authMd5[:]
-	lo.Version = Version(cl.Version)
+	lo.Version = Version(ac.Version)
 	return lo
 }
 
@@ -87,7 +86,7 @@ func (l *Login) String() string {
 		&l.MessageHeader, l.clientID, l.authenticatorClient, l.loginMode, l.timestamp, l.Version)
 }
 
-func (l *Login) Check(cli *auth.Client) Status {
+func (l *Login) Check(cli *codec.AuthConf) Status {
 	// 大版本不匹配
 	if !l.Version.MajorMatch(cli.Version) {
 		return Status(22)

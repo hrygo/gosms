@@ -1,0 +1,14 @@
+go 1.18
+
+use (
+	./auth
+	./auth_test
+	./codec
+	./codec_test
+	./database
+	./event_manager
+	./msc_client
+	./msc_server
+	./utils
+	./utils_test
+)
