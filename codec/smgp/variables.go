@@ -111,10 +111,10 @@ func (id CommandId) OpLog() log.Field {
 type Status uint32
 
 func (s Status) String() string {
-	return fmt.Sprintf("%d: %s", s, StatMap[uint32(s)])
+	return fmt.Sprintf("%d: %s", s, StatMap[s])
 }
 
-var StatMap = map[uint32]string{
+var StatMap = map[Status]string{
 	0:  "成功",
 	1:  "系统忙",
 	2:  "超过最大连接数",

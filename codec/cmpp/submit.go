@@ -60,7 +60,7 @@ func NewSubmit(ac *codec.AuthConf, phones []string, content string, seq uint32, 
 	mt := &Submit{MessageHeader: header, Version: Version(ac.Version)}
 
 	setOptions(ac, mt, options)
-	mt.msgFmt = MsgFmt(content)
+	mt.msgFmt = utils.MsgFmt(content)
 
 	mt.destUsrTl = uint8(len(phones))
 	mt.destTerminalId = strings.Join(phones, ",")
@@ -77,7 +77,7 @@ func NewSubmit(ac *codec.AuthConf, phones []string, content string, seq uint32, 
 	mt.msgSrc = ac.SmsDisplayNo
 
 	mt.msgContent = content
-	slices := MsgSlices(mt.msgFmt, content)
+	slices := utils.MsgSlices(mt.msgFmt, content)
 
 	if len(slices) == 1 {
 		mt.pkTotal = 1
@@ -334,22 +334,16 @@ func (s *Submit) Log() []log.Field {
 	msg := hex.EncodeToString(s.msgBytes[:l]) + "..."
 	ls := s.MessageHeader.Log()
 	return append(ls,
-		log.String("version", hex.EncodeToString([]byte{byte(s.Version)})),
-		log.Uint8("pkTotal", s.pkTotal),
-		log.Uint8("pkNumber", s.pkNumber),
-		log.Uint8("needReport", s.registeredDel),
+		log.String("spNumber", s.srcId),
 		log.String("clientId", s.msgSrc),
+		log.Uint8("priority", s.msgLevel),
 		log.String("serviceId", s.serviceId),
-		log.Uint8("tpPid", s.tpPid),
-		log.Uint8("tpUdhi", s.tpUdhi),
+		log.Uint8("needReport", s.registeredDel),
 		log.String("validTime", s.validTime),
 		log.String("atTime", s.atTime),
-		log.String("srcId", s.srcId),
-		log.Uint8("destUsrTl", s.destUsrTl),
-		log.String("destTerminalId", strings.Join(utils.Bytes2StringSlice(s.termIds, pl), ",")),
-		log.Uint8("destTerminalType", s.destTerminalType),
-		log.Uint8("msgLevel", s.msgLevel),
-		log.Uint8("msgFmt", s.msgFmt),
+		log.Uint8("userCount", s.destUsrTl),
+		log.String("userNumber", strings.Join(utils.Bytes2StringSlice(s.termIds, pl), ",")),
+		log.Uint8("msgFormat", s.msgFmt),
 		log.Uint8("msgLength", s.msgLength),
 		log.String("msgContent", msg),
 		log.Uint8("feeUsertype", s.feeUsertype),
@@ -357,37 +351,13 @@ func (s *Submit) Log() []log.Field {
 		log.Uint8("feeTerminalType", s.feeTerminalType),
 		log.String("feeType", s.feeType),
 		log.String("feeCode", s.feeCode),
+		log.Uint8("tpPid", s.tpPid),
+		log.Uint8("tpUdhi", s.tpUdhi),
+		log.Uint8("pkTotal", s.pkTotal),
+		log.Uint8("pkNumber", s.pkNumber),
 		log.String("linkID", s.linkID),
+		log.String("version", hex.EncodeToString([]byte{byte(s.Version)})),
 	)
-}
-
-func MsgSlices(fmt uint8, content string) (slices [][]byte) {
-	var msgBytes []byte
-	// 含中文
-	if fmt == 8 {
-		msgBytes, _ = utils.Utf8ToUcs2(content)
-		slices = utils.ToTPUDHISlices(msgBytes, 140)
-	} else {
-		// 纯英文
-		msgBytes = []byte(content)
-		slices = utils.ToTPUDHISlices(msgBytes, 160)
-	}
-	return
-}
-
-// MsgFmt 通过消息内容判断，设置编码格式。
-// 如果是纯拉丁字符采用0：ASCII串
-// 如果含多字节字符，这采用8：UCS-2编码
-func MsgFmt(content string) uint8 {
-	if len(content) < 2 {
-		return 0
-	}
-	all7bits := len(content) == len([]rune(content))
-	if all7bits {
-		return 0
-	} else {
-		return 8
-	}
 }
 
 type MtResult uint32

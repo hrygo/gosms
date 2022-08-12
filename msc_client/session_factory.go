@@ -23,7 +23,7 @@ import (
 
 var factories [3]*SessionFactory
 
-// resultQueryCacheMap 临时存储短信发送的返回结果数据，Key为queryId,value为[]*Result，后续采用数据库存储
+// resultQueryCacheMap 临时存储短信发送的返回结果数据，Key为queryId,value为[]*Status，后续采用数据库存储
 var resultQueryCacheMap sync.Map
 
 var mu sync.Mutex

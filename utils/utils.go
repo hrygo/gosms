@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"reflect"
 	"strconv"
@@ -35,6 +35,21 @@ func FormatTime(time time.Time) string {
 	return s + "032+"
 }
 
+// MsgFmt 通过消息内容判断，设置编码格式。
+// 如果是纯拉丁字符采用0：ASCII串
+// 如果含多字节字符，这采用8：UCS-2编码
+func MsgFmt(content string) uint8 {
+	if len(content) < 2 {
+		return 0
+	}
+	all7bits := len(content) == len([]rune(content))
+	if all7bits {
+		return 0
+	} else {
+		return 8
+	}
+}
+
 func Utf8ToUcs2(in string) ([]byte, error) {
 	if !utf8.ValidString(in) {
 		return nil, ErrInvalidUtf8Rune
@@ -42,7 +57,7 @@ func Utf8ToUcs2(in string) ([]byte, error) {
 
 	r := bytes.NewReader([]byte(in))
 	t := transform.NewReader(r, unicode.UTF16(unicode.BigEndian, unicode.IgnoreBOM).NewEncoder()) // UTF-16 bigendian, no-bom
-	out, err := ioutil.ReadAll(t)
+	out, err := io.ReadAll(t)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +67,7 @@ func Utf8ToUcs2(in string) ([]byte, error) {
 func Ucs2ToUtf8(in []byte) (string, error) {
 	r := bytes.NewReader(in)
 	t := transform.NewReader(r, unicode.UTF16(unicode.BigEndian, unicode.IgnoreBOM).NewDecoder()) // UTF-16 bigendian, no-bom
-	out, err := ioutil.ReadAll(t)
+	out, err := io.ReadAll(t)
 	if err != nil {
 		return "", err
 	}
@@ -66,7 +81,7 @@ func Utf8ToGB18030(in string) (string, error) {
 
 	r := bytes.NewReader([]byte(in))
 	t := transform.NewReader(r, simplifiedchinese.GB18030.NewEncoder())
-	out, err := ioutil.ReadAll(t)
+	out, err := io.ReadAll(t)
 	if err != nil {
 		return "", err
 	}
@@ -76,7 +91,7 @@ func Utf8ToGB18030(in string) (string, error) {
 func GB18030ToUtf8(in string) (string, error) {
 	r := bytes.NewReader([]byte(in))
 	t := transform.NewReader(r, simplifiedchinese.GB18030.NewDecoder())
-	out, err := ioutil.ReadAll(t)
+	out, err := io.ReadAll(t)
 	if err != nil {
 		return "", err
 	}
@@ -152,6 +167,20 @@ func Bytes2StringSlice(in []byte, pl int) (ret []string) {
 		for i := 0; i < part; i++ {
 			ret[i] = TrimStr(in[i*pl : (i+1)*pl])
 		}
+	}
+	return
+}
+
+func MsgSlices(fmt uint8, content string) (slices [][]byte) {
+	var msgBytes []byte
+	// 含中文
+	if fmt == 8 {
+		msgBytes, _ = Utf8ToUcs2(content)
+		slices = ToTPUDHISlices(msgBytes, 140)
+	} else {
+		// 纯英文
+		msgBytes = []byte(content)
+		slices = ToTPUDHISlices(msgBytes, 160)
 	}
 	return
 }

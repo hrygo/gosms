@@ -10,6 +10,7 @@ import (
 type AuthConf struct {
 	ISP             string        `yaml:"isp"               json:"isp"`             // 即运营商标识 cmpp、sgip、smgp
 	ClientId        string        `yaml:"client-id"         json:"clientId"`        // 即SourceAddr
+	LoginName       string        `yaml:"login-name"        json:"loginName"`       // SGIP协议所需服务端分配的用户名
 	SharedSecret    string        `yaml:"shared-secret"     json:"sharedSecret"`    // 通讯密码
 	Version         byte          `yaml:"version"           json:"version"`         // 见CMPP协议，48表示3.0 即 0x30 = 0011 0000
 	NeedReport      byte          `yaml:"need-report"       json:"needReport"`      // 是否需状态报告

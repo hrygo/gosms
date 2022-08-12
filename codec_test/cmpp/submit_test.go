@@ -114,7 +114,7 @@ func TestNewSubmit(t *testing.T) {
 
 func TestSubmit_Encode(t *testing.T) {
 	phones := []string{"17011112222"}
-	mts := cmpp.NewSubmit(ac, phones, Poem, uint32(codec.B32Seq.NextVal()), cmpp.MtAtTime(time.Now().Add(5*time.Minute)))
+	mts := cmpp.NewSubmit(ac, phones, Poem, uint32(codec.B32Seq.NextVal()), codec.MtAtTime(time.Now().Add(5*time.Minute)))
 
 	for _, mt := range mts {
 		mt := mt.(*cmpp.Submit)

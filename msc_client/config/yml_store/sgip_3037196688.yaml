@@ -1,4 +1,5 @@
-client-id: "123456"               # 即SourceAddr
+client-id: "3037196688"           # 即SourceAddr
+login-name: "login name"          # 用户名
 shared-secret: "shared secret"    # 通讯密码
 version: 48                       # 见协议，48表示3.0 即 0x30 = 0011 0000
 need-report: 1                    # 是否需状态报告

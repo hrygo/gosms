@@ -90,7 +90,7 @@ func NewSubmit(ac *codec.AuthConf, phones []string, content string, seq uint32, 
 			sub.msgBytes = dt
 			l := 0
 			sub.tlvList = utils.NewTlvList()
-			sub.tlvList.Add(TP_pid, []byte{0x01})
+			sub.tlvList.Add(TP_pid, []byte{0x00})
 			l += 5
 			sub.tlvList.Add(TP_udhi, []byte{0x01})
 			l += 5
@@ -256,24 +256,23 @@ func (s *Submit) Log() []log.Field {
 	}
 	msg := hex.EncodeToString(s.msgBytes[:l]) + "..."
 	return append(ls,
-		log.String("version", hex.EncodeToString([]byte{byte(s.Version)})),
-		log.Uint8("msgType", s.msgType),
-		log.Uint8("needReport", s.needReport),
+		log.String("spNumber", s.srcTermID),
 		log.Uint8("priority", s.priority),
-		log.String("serviceID", s.serviceID),
+		log.String("serviceId", s.serviceID),
+		log.Uint8("needReport", s.needReport),
+		log.String("validTime", s.validTime),
+		log.String("atTime", s.atTime),
+		log.Uint8("userCount", s.destTermIDCount),
+		log.String("userNumber", strings.Join(s.destTermID, ",")),
+		log.Uint8("msgType", s.msgType),
+		log.Uint8("msgFormat", s.msgFormat),
+		log.Uint8("msgLength", s.msgLength),
+		log.String("msgContent", msg),
 		log.String("feeType", s.feeType),
 		log.String("feeCode", s.feeCode),
 		log.String("fixedFee", s.fixedFee),
-		log.Uint8("msgFormat", s.msgFormat),
-		log.String("validTime", s.validTime),
-		log.String("atTime", s.atTime),
-		log.String("srcTermID", s.srcTermID),
 		log.String("chargeTermID", s.chargeTermID),
-		log.Uint8("destTermIDCount", s.destTermIDCount),
-		log.String("destTermID", strings.Join(s.destTermID, ",")),
-		log.Uint8("msgLength", s.msgLength),
-		log.String("msgContent", msg),
-		log.String("reserve", s.reserve),
+		log.String("version", hex.EncodeToString([]byte{byte(s.Version)})),
 		log.String("tlv", s.tlvList.String()),
 	)
 }
