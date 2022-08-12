@@ -17,7 +17,7 @@ import (
 var pass bool
 
 func init() {
-	db.InitDB(ConfigYml, "AuthClient.Mongo")
+	db.InitDB(ConfigYml, "Mongo")
 	pass = db.Mongo == nil
 }
 

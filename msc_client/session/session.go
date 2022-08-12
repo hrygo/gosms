@@ -12,6 +12,7 @@ import (
 
 	"github.com/hrygo/gosms/codec"
 	"github.com/hrygo/gosms/codec/cmpp"
+	"github.com/hrygo/gosms/codec/sgip"
 	"github.com/hrygo/gosms/codec/smgp"
 )
 
@@ -89,7 +90,6 @@ func (s *Session) Close() {
 
 	s.Lock()
 	defer s.Unlock()
-	defer close(s.cancel)
 
 	// 关闭连接
 	s.stat = StatClosing
@@ -145,7 +145,7 @@ func (s *Session) startReceiver() {
 						}
 					}
 					log.Debugf("[%s] Read Packet Body: %x", s.serverName, buff)
-					go s.onTraffic(cmd, seq, buff)
+					s.onTraffic(cmd, seq, buff)
 				}
 			}
 		}
@@ -170,7 +170,8 @@ func (s *Session) login() error {
 	switch s.serverName {
 	case SGIP:
 		{
-			return nil
+			pdu = sgip.NewBind(s.authConf, 1)
+			respLen = sgip.BindRspPkgLen
 		}
 	case CMPP:
 		{
@@ -210,6 +211,18 @@ func (s *Session) login() error {
 	switch s.serverName {
 	case SGIP:
 		{
+			if cmd != uint32(sgip.SGIP_BIND_RESP) {
+				return errors.New(fmt.Sprintf("[%s] CommandId error: expect %x, got %x", s.serverName, sgip.SGIP_BIND_RESP, cmd))
+			}
+			resp := &sgip.BindRsp{}
+			err := resp.Decode(seq, data[12:])
+			if err != nil {
+				return err
+			}
+			if resp.Status != sgip.Status(0) {
+				return errors.New(fmt.Sprintf("[%s] Login error with return \"%s\"", s.serverName, resp.Status.String()))
+			}
+			log.Info(fmt.Sprintf("[%s] Login result", s.serverName), resp.Log()...)
 		}
 	case CMPP:
 		{
@@ -263,14 +276,16 @@ func (s *Session) HealthCheck() bool {
 func (s *Session) ActiveTest() error {
 	msg := fmt.Sprintf("[%s] ActiveTest", s.serverName)
 	var active codec.RequestPdu
-	var seq = uint32(codec.B32Seq.NextVal())
 	switch s.serverName {
 	case CMPP:
-		active = cmpp.NewActiveTest(seq)
+		active = cmpp.NewActiveTest(uint32(codec.B32Seq.NextVal()))
 	case SGIP:
 		// active =
 	case SMGP:
-		active = smgp.NewActiveTest(seq)
+		active = smgp.NewActiveTest(uint32(codec.B32Seq.NextVal()))
+	}
+	if active == nil {
+		return nil
 	}
 	pack := active.Encode()
 	_, err := s.con.Write(pack)

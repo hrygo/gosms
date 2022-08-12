@@ -28,9 +28,9 @@ func SendN(message string, phones []string, options ...codec.OptionFunc) (queryI
 	for _, phone := range phones {
 		phone := phone
 		sc := SelectSession(phone)
-		for sc == nil {
-			time.Sleep(time.Millisecond)
-			sc = SelectSession(phone)
+		if sc == nil {
+			// 无可用链接或被限速，当前消息丢弃
+			continue
 		}
 		results = append(results, sc.Send(phone, message, options...)...)
 		sc.AddCounter()

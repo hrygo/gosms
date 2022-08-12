@@ -65,7 +65,7 @@ func (b *Bind) Decode(cid uint32, frame []byte) error {
 }
 
 func (b *Bind) Check(ac *codec.AuthConf) Status {
-	if ac.LoginName == b.LoginName && ac.SharedSecret == b.LoginPassword {
+	if ac != nil && ac.LoginName == b.LoginName && ac.SharedSecret == b.LoginPassword {
 		return 0
 	} else {
 		return 1

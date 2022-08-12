@@ -4,8 +4,8 @@ github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZx
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/hrygo/gosms/utils v0.0.0-20220812081336-2a5cda706967 h1:xGta8U+81bTDr1u8Zxe3Nr1YaxeYBGPE9xJx3HXN5aY=
-github.com/hrygo/gosms/utils v0.0.0-20220812081336-2a5cda706967/go.mod h1:LLvlP0vmuuIbUfBQ4mZCqlm40O/FEBhtdxisIJGUsc4=
+github.com/hrygo/gosms/utils v0.0.0-20220812101323-94db102fa165 h1:J/j1QoAD37hcSXtjKEAom+uAh/09GpeLPL9fMYQ96bA=
+github.com/hrygo/gosms/utils v0.0.0-20220812101323-94db102fa165/go.mod h1:LLvlP0vmuuIbUfBQ4mZCqlm40O/FEBhtdxisIJGUsc4=
 github.com/hrygo/log v1.2.1 h1:ED8+g3IFRTCxJO1EFwiRPaCv59mt6dbDL7617AVVsek=
 github.com/hrygo/log v1.2.1/go.mod h1:Zrtd002gteJ1m6/SQ+rMKyAHOGDKL3VPB0k/BGjfy18=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=

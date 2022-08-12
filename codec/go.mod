@@ -3,7 +3,7 @@ module github.com/hrygo/gosms/codec
 go 1.18
 
 require (
-	github.com/hrygo/gosms/utils v0.0.0-20220812081336-2a5cda706967
+	github.com/hrygo/gosms/utils v0.0.0-20220812101323-94db102fa165
 	github.com/hrygo/log v1.2.1
 	golang.org/x/text v0.3.7
 )

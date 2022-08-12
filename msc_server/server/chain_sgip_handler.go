@@ -2,6 +2,9 @@ package server
 
 func SgipHandlers() []TrafficHandler {
 	return []TrafficHandler{
-		// Add TrafficHandler
+		sgipSubmit,
+		sgipBind,
+		sgipUnbind,
+		sgipUnbindRsp,
 	}
 }

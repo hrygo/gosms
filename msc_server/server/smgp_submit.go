@@ -59,7 +59,7 @@ func handleSmgpSubmit(s *Server, sc *session, mt *smgp.Submit) {
 
 	var msg = fmt.Sprintf("[%s] OnTraffic %s", s.name, RC)
 
-	// 打印登录报文
+	// 打印报文
 	log.Debug(msg, FlatMapLog(sc.LogSession(32), mt.Log())...)
 
 	// 1. 包检查

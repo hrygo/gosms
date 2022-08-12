@@ -1,7 +1,7 @@
 client-id: "3037196688"           # 即SourceAddr
-login-name: "login name"          # 用户名
+login-name: "3037196688"          # 用户名
 shared-secret: "shared secret"    # 通讯密码
-version: 18                       # 见协议，18表示12 即 0x12 = 0001 0010
+version: 48                       # 见协议，48表示3.0 即 0x30 = 0011 0000
 need-report: 1                    # 是否需状态报告
 sms-display-no: 95566             # 发送号码（后面可拼接子码）
 service-id: myService             # 运营商分配的服务ID

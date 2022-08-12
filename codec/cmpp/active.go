@@ -39,7 +39,8 @@ func (at *ActiveTest) Log() []log.Field {
 
 func (at *ActiveTestRsp) Encode() []byte {
 	ls := (*MessageHeader)(at).Encode()
-	return append(ls, 0)
+	ls[12] = 0
+	return ls
 }
 
 func (at *ActiveTestRsp) Decode(seqId uint32, _ []byte) error {

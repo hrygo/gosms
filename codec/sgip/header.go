@@ -43,7 +43,7 @@ func (h *MessageHeader) Log() []log.Field {
 	ls := make([]log.Field, 0, 16)
 	ls = append(ls, log.Uint32(codec.Pkl, h.PacketLength),
 		log.String(codec.Cmd, h.CommandId.String()),
-		log.Uint64(codec.Seq, uint64(h.SequenceNumber[1])<<32|uint64(h.SequenceNumber[2])),
+		log.Uint64(codec.Seq, h.Sequence2Uint64()),
 		log.String(codec.Seq+"_12", fmt.Sprintf("%010d%010d%08x", h.SequenceNumber[0], h.SequenceNumber[1], h.SequenceNumber[2])))
 	return ls
 }
@@ -53,4 +53,12 @@ func (h *MessageHeader) String() string {
 		codec.Pkl, h.PacketLength,
 		codec.Cmd, h.CommandId.String(),
 		codec.Seq, fmt.Sprintf("%010d%010d%08x", h.SequenceNumber[0], h.SequenceNumber[1], h.SequenceNumber[2]))
+}
+
+func (h *MessageHeader) Sequence2Uint64() uint64 {
+	return uint64(h.SequenceNumber[1])<<32 | uint64(h.SequenceNumber[2])
+}
+
+func (h *MessageHeader) Sequence2String() string {
+	return fmt.Sprintf("%010d%010d%08x", h.SequenceNumber[0], h.SequenceNumber[1], h.SequenceNumber[2])
 }

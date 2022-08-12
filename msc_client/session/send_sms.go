@@ -10,7 +10,7 @@ import (
 type Result struct {
 	QueryId      int64     `json:"QueryId"`      // 给客户端用的查询编号
 	Phone        string    `json:"phone"`        // 手机号
-	SequenceId   uint32    `json:"sequenceId"`   // 消息发送的标识
+	SequenceId   uint64    `json:"sequenceId"`   // 消息发送的标识
 	Result       uint32    `json:"result"`       // 消息发送的网关响应码
 	MsgId        string    `json:"msgId"`        // 消息的msgId用于关联状态报告
 	Report       string    `json:"report"`       // DELIVRD 等7直接状态码

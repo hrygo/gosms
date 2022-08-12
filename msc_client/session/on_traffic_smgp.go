@@ -25,7 +25,7 @@ func (s *Session) sendBySmgp(phone string, message string, options ...codec.Opti
 		log.Debug(send, mtt.Log()...)
 
 		r := Result{SendTime: time.Now()}
-		r.SequenceId = mtt.SequenceId
+		r.SequenceId = uint64(mtt.SequenceId)
 		r.Phone = phone
 		results = append(results, &r)
 		SequenceIdResultCacheMap.Store(r.SequenceId, &r)

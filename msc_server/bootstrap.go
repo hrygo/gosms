@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/hrygo/gosms/codec"
+	"github.com/hrygo/gosms/codec/sgip"
 	"github.com/hrygo/gosms/utils"
 	"github.com/hrygo/gosms/utils/snowflake"
 )
@@ -31,7 +32,7 @@ func init() {
 	// 0. 设置初始化路径
 	setBasePath(ProjectName)
 
-	// 1. 读取配置文件(默认配置文件 config.yml)
+	// 1. 读取配置文件(默认配置文件 config.yaml)
 	ConfigYml = yaml_config.CreateYamlFactory(DefaultConfigPath, "", ProjectName)
 	ConfigYml.ConfigFileChangeListen()
 
@@ -118,8 +119,10 @@ func SeqInit() {
 	var b32dc = ConfigYml.GetInt64("Snowflake.B64.DC")
 	var b23worker = ConfigYml.GetInt64("Snowflake.B64.Worker")
 	var bcd = ConfigYml.GetString("Snowflake.BCD")
+	var sigp = ConfigYml.GetInt64("Snowflake.SGIP")
 
 	codec.B64Seq = snowflake.NewSnowflake(b64dc, b64worker)
 	codec.B32Seq = utils.NewCycleSequence(int32(b32dc), int32(b23worker))
 	codec.BcdSeq = utils.NewBcdSequence(bcd)
+	sgip.Sequencer = &sgip.SequenceNumber{Node: uint32(sigp)}
 }

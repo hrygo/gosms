@@ -6,7 +6,7 @@ import (
 )
 
 // New 创建一个自定义日志：
-// name 对应 config.yml 配置文件中的配置中间名（如果找不到，会采用默认配置）；
+// name 对应 config.yaml 配置文件中的配置中间名（如果找不到，会采用默认配置）；
 // opts 为日志增加可选项。
 func New(name string, opts ...log.Option) *zap.Logger {
 	fileName := ConfigYml.GetString("Logs." + name + ".LogName")

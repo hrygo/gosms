@@ -1,10 +1,35 @@
 AppDebug: true   # 设置程序所处的模式，debug=true 调试模式，日志优先显示在控制台，debug=false 非调试模式，将写入日志文件
 
-PoolSize: 100    # goroutine pool size
-
-Cache:
-  expire-time: 10s             # 缓存在内存存储的过期时间
-  expire-check-duration: 1s    # 缓存过期检查间隔
+Server:
+  TickDuration: 10s           #定时器执行间隔
+  ForceCloseConnTime: 5m      #一个连接5分钟不产生有效数据，将被强制关闭
+  CMPP: #移动网关配置信息
+    Port: 10086               #CMPP服务 端口
+    Multicore: true           #CMPP服务 是否开启多核
+    MaxSessions: 32            #CMPP服务 服务可承载最大会话数（已）
+  SGIP: #联通网关配置信息
+    Port: 10010
+    Multicore: true
+    MaxSessions: 32
+  SMGP: #电信网关配置信息
+    Port: 10000
+    Multicore: true
+    MaxSessions: 32
+  Pprof: #pprof debug 定义
+    Enable: true
+    Port: 10088
+  Mock: #模拟器参数
+    SuccessRate: 0.96      # 成功率，非成功的返回状态码非0
+    MinSubmitRespMs: 1     # Mt响应的最小时间
+    MaxSubmitRespMs: 3     # Mt响应的最大时间
+    FixReportRespMs: 5     # 状态报告在fix-report-resp-ms后发送
+    Delivery: # 模拟上行短信配置
+      Enable: true # 开关
+      Rate: 0.1    # 发送比例
+      Contents: # 发送内容
+        - "0010_,_hello world" # 上行消息的子号码及内容用,用 "_,_" 分隔
+        - "0011_,_TD"
+        - "0012_,_你是个好人！"
 
 AuthClient:
   StoreType: "mongo"                # 通过yaml文件来存储客户端配置信息，还支持mongo等
@@ -20,36 +45,6 @@ Mongo:
   MinPoolSize: 2
   MaxPoolSize: 10
 
-# 移动
-cmpp:
-  client-id: "123456"
-  address: "127.0.0.1:10086"
-  segment: "^1(((3[56789]|47|5[012789]|65|7[28]|8[23478]|9[578])[0-9])|34[0-8]|705)[0-9]{7}$"
-  max-conns: 4                      # 最大连接数
-  mt-window-size: 16                # 接收窗口大小, 服务端分配, 用于限制未得到响应的消息的最大数量
-  throughput: 1000                  # 最大吞吐, 单位tps, 服务端分配, 用于限制系统吞吐
-  tick-duration: 1s                 # 定时器调度间隔
-
-# 联通
-sgip:
-  client-id: "3037196688"
-  address: "127.0.0.1:10010"
-  segment: "^1(((3[012]|4[56]|5[56]|6[67]|7[156]|8[56]|9[6])[0-9])|709)[0-9]{7}$"
-  max-conns: 4
-  mt-window-size: 16
-  throughput: 1000
-  tick-duration: 1s
-
-# 电信
-smgp:
-  client-id: "12345678"
-  address: "127.0.0.1:10000"
-  segment: "^1(((33|49|53|62|7[347]|8[019]|9[139])[0-9])|349|700)[0-9]{7}$"
-  max-conns: 4
-  mt-window-size: 16
-  throughput: 1000
-  tick-duration: 1s
-
 Snowflake: # 类雪花算法序号生成器配置
   B64:
     DC: 0         # 3bits 0-7
@@ -58,10 +53,11 @@ Snowflake: # 类雪花算法序号生成器配置
     DC: 0         # 2bits 0-3
     Worker: 7     # 3bits 0-7
   BCD: 010203     # 3字节（BCD 码，取值 6位十进制数）
+  SGIP: 3037196688
 
 Logs:
   Default: # 默认的全部日志
-    LogName: "logs/sms.log"
+    LogName: "logs/gosms.log"
     Level: 0                              #debug=-1, info=0, warn=1, error=2, panic=3,4, fatal=5
     TextFormat: "json"                    #记录日志的格式，参数选项：console、json, console 表示一般的文本格式
     TimePrecision: "millisecond"          #记录日志时，相关的时间精度，该参数选项：second、millisecond ，分别表示 秒 和 毫秒 ,默认为毫秒级别
@@ -78,3 +74,13 @@ Logs:
     MaxBackups: 7
     MaxAge: 15
     Compress: false
+  CounterDB: # 存储消息计数数据（模拟数据库）
+    Level: -1
+    LogName: "logs/counter/db.json"
+    TextFormat: "json"
+    TimePrecision: "millisecond"
+    MaxSize: 1
+    MaxBackups: 10240
+    MaxAge: 10240
+    Compress: false
+

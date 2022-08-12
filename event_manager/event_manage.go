@@ -37,7 +37,7 @@ func RegisterShutdownHooker(key string, hookers ...Event) bool {
 // RegisterShutdownHookerAddChan 注册优雅停机钩子事件，并额外返回一个取消信号
 // 当执行优雅停机时，events 会先被执行，然后发送信号给通道
 func RegisterShutdownHookerAddChan(key string, events ...Event) <-chan bool {
-	cancel := make(chan bool)
+	cancel := make(chan bool, 1)
 	events = append(events, func(args ...any) {
 		cancel <- true
 	})
@@ -94,8 +94,10 @@ func (m *eventManage) Call(key string, args ...interface{}) {
 		key = m.prefix + key
 	}
 	if fn, exists := m.Get(key); exists {
-		fn(args)
 		log.Infof("Call: %#v, Key: %s", fn, key)
+		fn(args)
+		log.Infof("Done: %#v, Key: %s", fn, key)
+
 	} else {
 		log.Error(ErrorsFuncEventNotRegister + ", 键名：" + key)
 	}

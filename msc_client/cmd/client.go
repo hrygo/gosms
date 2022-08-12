@@ -21,9 +21,9 @@ func main() {
 
 	auth.Cache = auth.New(sms.ConfigYml)
 
-	phone := flag.String("p", "13800001111,13300001111", "phone")
+	phone := flag.String("p", "13800001111,13300001111,18600001111", "phone")
 	message := flag.String("m", "hello world, 你好世界！", "message")
-	iterates := flag.Int("i", 1000, "iterates")
+	iterates := flag.Int("i", 1, "iterates")
 	flag.Parse()
 
 	go func() {

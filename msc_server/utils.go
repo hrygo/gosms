@@ -8,6 +8,9 @@ import (
 
 func FindAuthConf(isp, clientId string) (ac *codec.AuthConf) {
 	c := auth.Cache.FindByCid(isp, clientId)
+	if c == nil {
+		return nil
+	}
 	ac = &codec.AuthConf{}
 	utils.StructCopy(c, ac)
 	return

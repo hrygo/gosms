@@ -87,6 +87,10 @@ func (l *Login) String() string {
 }
 
 func (l *Login) Check(cli *codec.AuthConf) Status {
+	if cli == nil {
+		return Status(69)
+	}
+
 	// 大版本不匹配
 	if !l.Version.MajorMatch(cli.Version) {
 		return Status(22)

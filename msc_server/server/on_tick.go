@@ -10,6 +10,7 @@ import (
 
 	"github.com/hrygo/gosms/codec"
 	"github.com/hrygo/gosms/codec/cmpp"
+	"github.com/hrygo/gosms/codec/sgip"
 	"github.com/hrygo/gosms/codec/smgp"
 	"github.com/hrygo/gosms/msc_server"
 	"github.com/hrygo/gosms/utils"
@@ -81,9 +82,12 @@ func activeTest(s *Server, sc *session) {
 			case CMPP:
 				active = cmpp.NewActiveTest(seq)
 			case SGIP:
-				// active =
+				// 联通不进行心跳检测
 			case SMGP:
 				active = smgp.NewActiveTest(seq)
+			}
+			if active == nil {
+				return
 			}
 			pack := active.Encode()
 			err := sc.conn.AsyncWrite(pack, func(c gnet.Conn) error {
@@ -110,6 +114,11 @@ func mockDelivery(s *Server, sc *session) {
 	if !open {
 		return
 	}
+	rate := msc.ConfigYml.GetFloat64("Server.Mock.Delivery.Rate")
+	if utils.DiceCheck(rate) {
+		return
+	}
+
 	cli := msc.FindAuthConf(s.name, sc.clientId)
 	if cli == nil {
 		return
@@ -133,11 +142,14 @@ func mockDelivery(s *Server, sc *session) {
 		var seq = uint32(codec.B32Seq.NextVal())
 		switch s.name {
 		case CMPP:
-			dly = cmpp.NewDelivery(cli, "18600001111", text, cli.SmsDisplayNo+subNo, cli.ServiceId, seq)
+			dly = cmpp.NewDelivery(cli, "18600001111", text, subNo, cli.ServiceId, seq)
 		case SGIP:
-			// dly =
+			// 联动上下行是分开的，不会在下行链路发送上行短信
 		case SMGP:
-			dly = smgp.NewDeliver(cli, "13300001111", cli.SmsDisplayNo+subNo, text, seq)
+			dly = smgp.NewDeliver(cli, "13300001111", subNo, text, seq)
+		}
+		if dly == nil {
+			return
 		}
 		pack := dly.Encode()
 		err := sc.conn.AsyncWrite(pack, func(c gnet.Conn) error {
@@ -161,7 +173,7 @@ func sendTerminate(s *Server, sc *session) {
 		case CMPP:
 			term = cmpp.NewTerminate(seq)
 		case SGIP:
-			// term =
+			term = sgip.NewUnbind()
 		case SMGP:
 			term = smgp.NewExit(seq)
 		}

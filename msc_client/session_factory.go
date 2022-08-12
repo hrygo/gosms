@@ -50,6 +50,9 @@ func SelectSession(phone string) *session.Session {
 	for i, factory := range factories {
 		if factory == nil {
 			factory = CreateSessionFactory(ISPS[i])
+			if factory == nil {
+				continue
+			}
 		}
 		if factory.regex.MatchString(phone) {
 			fa = factory
@@ -74,25 +77,26 @@ func CreateSessionFactory(isp string) *SessionFactory {
 
 	ac := FindAuthConf(isp, ConfigYml.GetString(isp+".client-id"))
 	if ac == nil {
-		log.Fatalf("isp=%s, clientId=%s not found!", isp, ConfigYml.GetString(isp+".client-id"))
+		log.Errorf("isp=%s, clientId=%s not found!", isp, ConfigYml.GetString(isp+".client-id"))
+		return nil
 	}
 
 	factory := &SessionFactory{srvName: isp, authConf: ac}
 
 	address := ConfigYml.GetString(isp + ".address")
 	if address == "" {
-		log.Fatal(isp + ".address can't be empty")
+		log.Error(isp + ".address can't be empty")
 	}
 	factory.serverAddr = address
 
 	segment := ConfigYml.GetString(isp + ".segment")
 	if segment == "" {
-		log.Fatal(isp + ".segment can't be empty")
+		log.Error(isp + ".segment can't be empty")
 	}
 	var err error
 	factory.regex, err = regexp.Compile(segment)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Error(err.Error())
 	}
 
 	maxConns := ConfigYml.GetInt(isp + ".max-conns")
@@ -218,7 +222,7 @@ func cleanQueryCacheMap(asyncHandler func([]any)) {
 }
 
 func cleanRequestIdCacheMap() {
-	expiredKeys := make([]uint32, 0, 32)
+	expiredKeys := make([]uint64, 0, 32)
 	session.SequenceIdResultCacheMap.Range(func(key, value any) bool {
 		d := ConfigYml.GetDuration("Cache.expire-time")
 		if d == 0 {
@@ -347,6 +351,7 @@ func (f *SessionFactory) RegCloseSessionsHooker() {
 		close(f.window)
 		for _, sc := range f.sessions {
 			sc.Close()
+			log.Warnf("session %p closed.", sc)
 		}
 	})
 }
@@ -370,6 +375,9 @@ func (i ISP) Int() int {
 
 func FindAuthConf(isp, clientId string) (ac *codec.AuthConf) {
 	c := auth.Cache.FindByCid(isp, clientId)
+	if c == nil {
+		return nil
+	}
 	ac = &codec.AuthConf{}
 	utils.StructCopy(c, ac)
 	return

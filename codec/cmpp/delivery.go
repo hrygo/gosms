@@ -42,11 +42,7 @@ func NewDelivery(ac *codec.AuthConf, phone, msg, dest, serviceId string, seq uin
 	dly.msgId = uint64(codec.B64Seq.NextVal())
 	setMsgContent(dly, msg)
 
-	if dest != "" {
-		dly.destId = dest
-	} else {
-		dly.destId = ac.SmsDisplayNo
-	}
+	dly.destId = ac.SmsDisplayNo + dest
 	if serviceId != "" {
 		dly.serviceId = serviceId
 	} else {
