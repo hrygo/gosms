@@ -141,7 +141,7 @@ func (d *Deliver) ToResponse(code uint32) codec.Pdu {
 
 func (r *DeliverRsp) Decode(cid uint32, frame []byte) error {
 	r.PacketLength = codec.HeadLen + uint32(len(frame))
-	r.CommandId = SGIP_SUBMIT_RESP
+	r.CommandId = SGIP_DELIVER_RESP
 	r.SequenceNumber = make([]uint32, 3)
 	r.SequenceNumber[0] = cid
 	r.SequenceNumber[1] = binary.BigEndian.Uint32(frame[0:4])

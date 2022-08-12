@@ -16,7 +16,7 @@ func TestDeliver_Decode(t *testing.T) {
 }
 
 func TestDeliver_ReportDecode(t *testing.T) {
-	mts := smgp.NewSubmit(ac, []string{"17011113333"}, "hello world，世界", uint32(codec.B32Seq.NextVal()), smgp.MtOptions{})
+	mts := smgp.NewSubmit(ac, []string{"17011113333"}, "hello world，世界", uint32(codec.B32Seq.NextVal()))
 	mt := mts[0]
 	msp := mt.ToResponse(0).(*smgp.SubmitRsp)
 	tm := mt.(*smgp.Submit)

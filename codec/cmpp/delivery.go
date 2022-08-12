@@ -89,7 +89,7 @@ func (d *Delivery) Encode() []byte {
 		copy(frame[index:index+l], d.report.Encode())
 	} else {
 		// 上行短信，不支持长短信，固定选用第一片 （New时需处理）
-		slices := MsgSlices(d.msgFmt, d.msgContent)
+		slices := utils.MsgSlices(d.msgFmt, d.msgContent)
 		// 不支持长短信，固定选用第一片
 		content := slices[0]
 		copy(frame[index:index+l], content)
@@ -160,7 +160,7 @@ func (d *Delivery) ToResponse(code uint32) codec.Pdu {
 }
 
 func setMsgContent(dly *Delivery, msg string) {
-	dly.msgFmt = MsgFmt(msg)
+	dly.msgFmt = utils.MsgFmt(msg)
 	var l int
 	if dly.msgFmt == 8 {
 		l = 2 * len([]rune(msg))

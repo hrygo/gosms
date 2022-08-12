@@ -12,7 +12,7 @@ import (
 
 func TestDeliver(t *testing.T) {
 	// Test New Log
-	pdu := sgip.NewDeliver(ac, "18600001111", "hello，世界", "96688")
+	pdu := sgip.NewDeliver(ac, "18600001111", Poem, "01")
 	log.Info("deliver", pdu.Log()...)
 	deliver := pdu.(*sgip.Deliver)
 

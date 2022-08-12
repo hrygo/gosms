@@ -3,7 +3,6 @@ package smgp
 import (
 	"bytes"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -12,7 +11,7 @@ import (
 )
 
 func TestNewSubmit(t *testing.T) {
-	subs := smgp.NewSubmit(ac, []string{"17600001111", "17700001111"}, Poem, uint32(codec.B32Seq.NextVal()), smgp.MtOptions{AtTime: time.Now().Add(time.Minute)})
+	subs := smgp.NewSubmit(ac, []string{"17600001111", "17700001111"}, Poem, uint32(codec.B32Seq.NextVal()))
 	assert.True(t, len(subs) == 4)
 
 	for i, sub := range subs {
@@ -35,7 +34,7 @@ func TestSubmit_Encode(t *testing.T) {
 }
 
 func encode(t *testing.T, phones []string, txt string, l int) {
-	subs := smgp.NewSubmit(ac, phones, txt, uint32(codec.B32Seq.NextVal()), smgp.MtOptions{AtTime: time.Now().Add(time.Minute)})
+	subs := smgp.NewSubmit(ac, phones, txt, uint32(codec.B32Seq.NextVal()))
 	assert.True(t, len(subs) == l)
 
 	for _, sub := range subs {
@@ -57,7 +56,7 @@ func TestSubmit_Decode(t *testing.T) {
 }
 
 func decode(t *testing.T, phones []string, txt string, l int) {
-	subs := smgp.NewSubmit(ac, phones, txt, uint32(codec.B32Seq.NextVal()), smgp.MtOptions{AtTime: time.Now().Add(time.Minute)})
+	subs := smgp.NewSubmit(ac, phones, txt, uint32(codec.B32Seq.NextVal()))
 	assert.True(t, len(subs) == l)
 
 	for _, sub := range subs {

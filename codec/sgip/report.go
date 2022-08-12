@@ -64,11 +64,11 @@ func (r *Report) Decode(cid uint32, frame []byte) error {
 	r.SequenceNumber[2] = binary.BigEndian.Uint32(frame[index:])
 	index += 4
 	r.MtSequence = make([]uint32, 3)
-	r.SequenceNumber[0] = binary.BigEndian.Uint32(frame[index:])
+	r.MtSequence[0] = binary.BigEndian.Uint32(frame[index:])
 	index += 4
-	r.SequenceNumber[1] = binary.BigEndian.Uint32(frame[index:])
+	r.MtSequence[1] = binary.BigEndian.Uint32(frame[index:])
 	index += 4
-	r.SequenceNumber[2] = binary.BigEndian.Uint32(frame[index:])
+	r.MtSequence[2] = binary.BigEndian.Uint32(frame[index:])
 	index += 4
 	r.ReportType = frame[index]
 	index++
@@ -83,8 +83,8 @@ func (r *Report) Decode(cid uint32, frame []byte) error {
 func (r *Report) Log() []log.Field {
 	ls := r.MessageHeader.Log()
 	return append(ls,
-		log.Uint64(codec.Seq, uint64(r.MtSequence[1])<<32|uint64(r.MtSequence[2])),
-		log.String(codec.Seq+"_12", fmt.Sprintf("%010d%010d%08x", r.MtSequence[0], r.MtSequence[1], r.MtSequence[2])),
+		log.Uint64("mt_seq", uint64(r.MtSequence[1])<<32|uint64(r.MtSequence[2])),
+		log.String("mt_seq_12", fmt.Sprintf("%010d%010d%08x", r.MtSequence[0], r.MtSequence[1], r.MtSequence[2])),
 		log.Uint8("reportType", r.ReportType),
 		log.String("userNumber", r.UserNumber),
 		log.String("status", r.State.String()),
