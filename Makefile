@@ -13,19 +13,13 @@ all: help
 ## linux: Compile the binary with linux.
 linux: prepare
 	@cd ${BUILD_DIR}; \
-	GOOS=linux GOARCH=${GOARCH} go build ${LDFLAGS} -trimpath -o ${PUBLISH}/${BINARY}-linux-${GOARCH} . ; \
+	GOOS=linux GOARCH=${GOARCH} go build ${LDFLAGS} -trimpath -o ${PUBLISH}/${BINARY}-linux-${GOARCH}-${VERSION} . ; \
 	cd - >/dev/null
 
 ## darwin: Compile the binary with macos.
 darwin: prepare
 	@cd ${BUILD_DIR}; \
-	GOOS=darwin GOARCH=${GOARCH} go build ${LDFLAGS} -trimpath -o ${PUBLISH}/${BINARY}-darwin-${GOARCH} . ; \
-	cd - >/dev/null
-
-## windows: Compile the binary with windows.
-windows: prepare
-	@cd ${BUILD_DIR}; \
-	GOOS=windows GOARCH=${GOARCH} go build ${LDFLAGS} -trimpath -o ${PUBLISH}/${BINARY}-windows-${GOARCH}.exe . ; \
+	GOOS=darwin GOARCH=${GOARCH} go build ${LDFLAGS} -trimpath -o ${PUBLISH}/${BINARY}-darwin-${GOARCH}-${VERSION} . ; \
 	cd - >/dev/null
 
 ## client: Compile client binary for your current platform
