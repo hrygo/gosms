@@ -20,7 +20,7 @@ func TestNewSubmit(t *testing.T) {
 		if i < 3 {
 			assert.True(t, int(sub.PacketLength) == 328)
 			assert.True(t, int(sub.MsgLength()) == 140)
-			assert.True(t, int(sub.MsgLength()) == len(sub.MsgBytes()))
+			assert.True(t, int(sub.MsgLength()) == len(sub.MsgContent()))
 		} else {
 			assert.True(t, int(sub.MsgLength()) <= 140)
 			assert.True(t, int(sub.PacketLength) > 147)
@@ -75,7 +75,13 @@ func decode(t *testing.T, phones []string, txt string, l int) {
 		dt2 := subDec.Encode()
 		t.Logf("%s", subDec)
 		t.Logf("%v: %x", int(subDec.PacketLength) == len(dt2), dt2)
-		assert.True(t, bytes.Equal(dt, dt2))
+		content := sub.MsgContent()
+		if content[0] == 0x05 && content[1] == 0x00 && content[2] == 0x03 {
+			content = content[6:]
+		}
+		ctx1, _ := smgp.GbDecoder.Bytes(content)
+		ctx2 := subDec.MsgContent()
+		assert.True(t, bytes.Equal(ctx1, ctx2))
 
 		resp := subDec.ToResponse(0).(*smgp.SubmitRsp)
 		t.Logf("%s", resp)

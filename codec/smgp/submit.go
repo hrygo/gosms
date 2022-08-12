@@ -31,8 +31,7 @@ type Submit struct {
 	destTermIDCount byte           // 【1字节】短消息接收号码总数
 	destTermID      []string       // 【21*DestTermCount字节】短消息接收号码
 	msgLength       byte           // 【1字节】短消息长度
-	msgContent      string         // 【MsgLength字节】短消息内容
-	msgBytes        []byte         // 消息内容按照Msg_Fmt编码后的数据
+	msgContent      []byte         // 消息内容按照Msg_Fmt编码后的数据
 	reserve         string         // 【8字节】保留
 	tlvList         *utils.TlvList // 【TLV】可选项参数
 
@@ -74,8 +73,8 @@ func NewSubmit(ac *codec.AuthConf, phones []string, content string, seq uint32, 
 	}
 	slices := utils.ToTPUDHISlices(data, 140)
 	if len(slices) == 1 {
-		mt.msgBytes = slices[0]
-		mt.msgLength = byte(len(mt.msgBytes))
+		mt.msgContent = slices[0]
+		mt.msgLength = byte(len(mt.msgContent))
 		mt.PacketLength = uint32(MtBaseLen + len(mt.destTermID)*21 + int(mt.msgLength))
 		return []codec.RequestPdu{mt}
 	} else {
@@ -87,7 +86,7 @@ func NewSubmit(ac *codec.AuthConf, phones []string, content string, seq uint32, 
 				sub.SequenceId = uint32(codec.B32Seq.NextVal())
 			}
 			sub.msgLength = byte(len(dt))
-			sub.msgBytes = dt
+			sub.msgContent = dt
 			l := 0
 			sub.tlvList = utils.NewTlvList()
 			sub.tlvList.Add(TP_pid, []byte{0x00})
@@ -129,7 +128,7 @@ func (s *Submit) Encode() []byte {
 	}
 
 	index = utils.CopyByte(frame, s.msgLength, index)
-	copy(frame[index:index+int(s.msgLength)], s.msgBytes)
+	copy(frame[index:index+int(s.msgLength)], s.msgContent)
 	index += +int(s.msgLength)
 	index = utils.CopyStr(frame, s.reserve, index, 8)
 	if s.tlvList != nil {
@@ -183,13 +182,11 @@ func (s *Submit) Decode(seq uint32, frame []byte) error {
 	s.msgLength = frame[index]
 	index++
 	content := frame[index : index+int(s.msgLength)]
-	s.msgBytes = content
 	if content[0] == 0x05 && content[1] == 0x00 && content[2] == 0x03 {
 		content = content[6:]
 	}
 	index += int(s.msgLength)
-	tmp, _ := GbDecoder.Bytes(content)
-	s.msgContent = string(tmp)
+	s.msgContent, _ = GbDecoder.Bytes(content)
 	s.reserve = utils.TrimStr(frame[index : index+8])
 	index += 8
 	// 一个tlv至少5字节
@@ -211,9 +208,9 @@ func (s *Submit) ToResponse(code uint32) codec.Pdu {
 }
 
 func (s *Submit) String() string {
-	bts := s.msgBytes
+	bts := s.msgContent
 	if s.msgLength > 6 {
-		bts = s.msgBytes[:6]
+		bts = s.msgContent[:6]
 	}
 	return fmt.Sprintf("{ header: %s, msgType: %v, NeedReport: %v, LruPriority: %v, ServiceID: %v, "+
 		"feeType: %v, feeCode: %v, fixedFee: %v, msgFormat: %v, validTime: %v, AtTime: %v, SrcTermID: %v, "+
@@ -250,11 +247,11 @@ func (r *SubmitRsp) String() string {
 
 func (s *Submit) Log() []log.Field {
 	ls := s.MessageHeader.Log()
-	var l = len(s.msgBytes)
+	var l = len(s.msgContent)
 	if l > 6 {
 		l = 6
 	}
-	msg := hex.EncodeToString(s.msgBytes[:l]) + "..."
+	msg := hex.EncodeToString(s.msgContent[:l]) + "..."
 	return append(ls,
 		log.String("spNumber", s.srcTermID),
 		log.Uint8("priority", s.priority),
@@ -347,12 +344,8 @@ func (s *Submit) MsgLength() byte {
 	return s.msgLength
 }
 
-func (s *Submit) MsgContent() string {
+func (s *Submit) MsgContent() []byte {
 	return s.msgContent
-}
-
-func (s *Submit) MsgBytes() []byte {
-	return s.msgBytes
 }
 
 func (s *Submit) Reserve() string {
@@ -402,7 +395,7 @@ func (s *Submit) SetOptions(ac *codec.AuthConf, options *codec.MtOptions) {
 	s.validTime = utils.FormatTime(vt)
 
 	s.srcTermID = ac.SmsDisplayNo
-	if options.SrcId != "" {
-		s.srcTermID += options.SrcId
+	if options.SpSubNo != "" {
+		s.srcTermID += options.SpSubNo
 	}
 }

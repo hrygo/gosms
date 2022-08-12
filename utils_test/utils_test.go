@@ -58,7 +58,7 @@ func TestUcs2ToUtf8(t *testing.T) {
 		t.Fatalf("The error is %#v, not to the result expected: nil", err)
 	}
 
-	if s1 != "汉" {
+	if string(s1) != "汉" {
 		t.Fatalf("The result is %s, not equal to our expected %s", s1, "汉")
 	}
 

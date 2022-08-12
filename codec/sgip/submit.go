@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"strings"
+	"time"
 
 	"github.com/hrygo/log"
 
@@ -58,14 +59,14 @@ type Submit struct {
 	// 其它参见 GSM3.38 第 4 节:SMS Data Coding Scheme
 }
 
-const MtBaseLen = 123
+const MtBaseLen = 143
 
 func NewSubmit(ac *codec.AuthConf, phones []string, content string, options ...codec.OptionFunc) (messages []codec.RequestPdu) {
 	mt := &Submit{}
 	mt.PacketLength = MtBaseLen
 	mt.CommandId = SGIP_SUBMIT
 	mt.SequenceNumber = Sequencer.NextVal()
-	// mt.SetOptions(ac, codec.LoadMtOptions(options...))
+	mt.SetOptions(ac, codec.LoadMtOptions(options...))
 	mt.UserCount = byte(len(phones))
 	mt.UserNumber = phones
 	mt.MessageCoding = utils.MsgFmt(content)
@@ -177,6 +178,8 @@ func (s *Submit) Decode(cid uint32, frame []byte) error {
 	index += 6
 	s.GivenValue = utils.TrimStr(frame[index : index+6])
 	index += 6
+	s.AgentFlag = frame[index]
+	index++
 	s.MorelatetoMTFlag = frame[index]
 	index++
 	s.Priority = frame[index]
@@ -197,10 +200,55 @@ func (s *Submit) Decode(cid uint32, frame []byte) error {
 	index++
 	s.MessageLength = binary.BigEndian.Uint32(frame[index:])
 	index += 4
-	s.MessageContent = frame[index : index+int(s.MessageLength)]
-	index += int(s.MessageLength)
+	content := frame[index : index+int(s.MessageLength)]
+	s.MessageContent = content
+	if content[0] == 0x05 && content[1] == 0x00 && content[2] == 0x03 {
+		content = content[6:]
+		s.MessageContent, _ = utils.Ucs2ToUtf8(content)
+	}
 	s.Reserve = ""
 	return nil
+}
+
+func (s *Submit) SetOptions(ac *codec.AuthConf, ops *codec.MtOptions) {
+	s.SPNumber = ac.SmsDisplayNo
+	if ops.SpSubNo != "" {
+		s.SPNumber += ops.SpSubNo
+	}
+
+	if len(ac.ClientId) > 5 {
+		s.CorpId = ac.ClientId[5:]
+	} else {
+		s.CorpId = ac.ClientId
+	}
+
+	if ops.MsgLevel != uint8(0xf) {
+		s.Priority = ops.MsgLevel
+	} else {
+		s.Priority = ac.DefaultMsgLevel
+	}
+
+	if ops.NeedReport != uint8(0xf) {
+		s.ReportFlag = ops.NeedReport
+	} else {
+		s.ReportFlag = ac.NeedReport
+	}
+
+	s.ServiceType = ac.ServiceId
+	if ops.ServiceId != "" {
+		s.ServiceType = ops.ServiceId
+	}
+
+	if ops.AtTime != "" {
+		s.ScheduleTime = ops.AtTime
+	}
+
+	if ops.ValidTime != "" {
+		s.ExpireTime = ops.ValidTime
+	} else {
+		t := time.Now().Add(ac.MtValidDuration)
+		s.ExpireTime = utils.FormatTime(t)
+	}
 }
 
 func (s *Submit) Log() []log.Field {

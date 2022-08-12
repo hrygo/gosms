@@ -42,8 +42,7 @@ type Submit struct {
 	termIds          []byte // DestTerminalId编码后的格式
 	destTerminalType uint8  //  接收短信的用户的号码类型，0：真实号码；1：伪码【1字节】
 	msgLength        uint8  // 信息长度(Msg_Fmt值为0时：<160个字节；其它<=140个字节) 【1字节】
-	msgContent       string // 信息内容 【MsgLength字节】
-	msgBytes         []byte // 消息内容按照Msg_Fmt编码后的数据
+	msgContent       []byte // 消息内容按照Msg_Fmt编码后的数据
 	linkID           string // 点播业务使用的LinkID，非点播类业务的MT流程不使用该字段 【20字节】
 
 	// 协议版本,不是报文内容，但在调用encode方法前需要设置此值
@@ -76,14 +75,13 @@ func NewSubmit(ac *codec.AuthConf, phones []string, content string, seq uint32, 
 
 	mt.msgSrc = ac.SmsDisplayNo
 
-	mt.msgContent = content
 	slices := utils.MsgSlices(mt.msgFmt, content)
 
 	if len(slices) == 1 {
 		mt.pkTotal = 1
 		mt.pkNumber = 1
 		mt.msgLength = uint8(len(slices[0]))
-		mt.msgBytes = slices[0]
+		mt.msgContent = slices[0]
 		mt.TotalLength = uint32(baseLen + len(termIds) + len(slices[0]))
 		return []codec.RequestPdu{mt}
 	} else {
@@ -99,7 +97,7 @@ func NewSubmit(ac *codec.AuthConf, phones []string, content string, seq uint32, 
 			}
 			sub.pkNumber = uint8(i + 1)
 			sub.msgLength = uint8(len(msgBytes))
-			sub.msgBytes = msgBytes
+			sub.msgContent = msgBytes
 			sub.TotalLength = uint32(baseLen + len(termIds) + len(msgBytes))
 			messages = append(messages, sub)
 		}
@@ -154,8 +152,8 @@ func (s *Submit) Encode() []byte {
 	}
 	frame[index] = s.msgLength
 	index++
-	copy(frame[index:index+len(s.msgBytes)], s.msgBytes)
-	index += len(s.msgBytes)
+	copy(frame[index:index+len(s.msgContent)], s.msgContent)
+	index += len(s.msgContent)
 	if V30.MajorMatchV(s.Version) {
 		copy(frame[index:index+20], s.linkID)
 	}
@@ -224,14 +222,10 @@ func (s *Submit) Decode(seq uint32, frame []byte) error {
 	s.msgLength = frame[index]
 	index++
 	content := frame[index : index+int(s.msgLength)]
-	s.msgBytes = content
+	s.msgContent = content
 	if content[0] == 0x05 && content[1] == 0x00 && content[2] == 0x03 {
 		content = content[6:]
-	}
-	if s.msgFmt == 8 {
 		s.msgContent, _ = utils.Ucs2ToUtf8(content)
-	} else {
-		s.msgContent = string(content)
 	}
 	index += int(s.msgLength)
 	if V30.MajorMatchV(s.Version) {
@@ -327,11 +321,11 @@ func (s *Submit) Log() []log.Field {
 	if V30.MajorMatchV(s.Version) {
 		pl = 32
 	}
-	var l = len(s.msgBytes)
+	var l = len(s.msgContent)
 	if l > 6 {
 		l = 6
 	}
-	msg := hex.EncodeToString(s.msgBytes[:l]) + "..."
+	msg := hex.EncodeToString(s.msgContent[:l]) + "..."
 	ls := s.MessageHeader.Log()
 	return append(ls,
 		log.String("spNumber", s.srcId),
@@ -480,12 +474,8 @@ func (s *Submit) MsgLength() uint8 {
 	return s.msgLength
 }
 
-func (s *Submit) MsgContent() string {
+func (s *Submit) MsgContent() []byte {
 	return s.msgContent
-}
-
-func (s *Submit) MsgBytes() []byte {
-	return s.msgBytes
 }
 
 func (s *Submit) LinkID() string {
@@ -555,8 +545,8 @@ func setOptions(ac *codec.AuthConf, sub *Submit, opts *codec.MtOptions) {
 		sub.feeTerminalId = ac.FeeTerminalId
 	}
 
-	if opts.SrcId != "" {
-		sub.srcId = opts.SrcId
+	if opts.SpSubNo != "" {
+		sub.srcId = ac.SmsDisplayNo + opts.SpSubNo
 	} else {
 		sub.srcId = ac.SmsDisplayNo
 	}

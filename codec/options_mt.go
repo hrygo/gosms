@@ -30,7 +30,7 @@ type MtOptions struct {
 	FeeCode         string
 	ValidTime       string
 	AtTime          string
-	SrcId           string
+	SpSubNo         string
 	LinkID          string
 }
 
@@ -72,10 +72,10 @@ func MtLinkID(s string) OptionFunc {
 	}
 }
 
-// MtSrcId SP的服务代码或前缀为服务代码的长号码, 网关将该号码完整的填到SMPP协议Submit_SM消息相应的source_addr字段，该号码最终在用户手机上显示为短消息的主叫号码
-func MtSrcId(s string) OptionFunc {
+// MtSpSubNo 拼接到SpNumber后，整体号码最终在用户手机上显示为短消息的主叫号码
+func MtSpSubNo(s string) OptionFunc {
 	return func(opts *MtOptions) {
-		opts.SrcId = s
+		opts.SpSubNo = s
 	}
 }
 

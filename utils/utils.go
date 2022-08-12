@@ -64,14 +64,14 @@ func Utf8ToUcs2(in string) ([]byte, error) {
 	return out, nil
 }
 
-func Ucs2ToUtf8(in []byte) (string, error) {
+func Ucs2ToUtf8(in []byte) ([]byte, error) {
 	r := bytes.NewReader(in)
 	t := transform.NewReader(r, unicode.UTF16(unicode.BigEndian, unicode.IgnoreBOM).NewDecoder()) // UTF-16 bigendian, no-bom
 	out, err := io.ReadAll(t)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return string(out), nil
+	return out, nil
 }
 
 func Utf8ToGB18030(in string) (string, error) {

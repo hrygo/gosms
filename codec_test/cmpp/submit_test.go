@@ -71,7 +71,7 @@ func TestDecode(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got, _ := utils.Ucs2ToUtf8(tt.args.ucs2); got != tt.want {
+			if got, _ := utils.Ucs2ToUtf8(tt.args.ucs2); string(got) != tt.want {
 				t.Errorf("Ucs2Decode() = %v, want %v", got, tt.want)
 			}
 		})
@@ -137,8 +137,13 @@ func TestSubmit_Encode(t *testing.T) {
 		}
 
 		t.Logf("decMt.String()  : %v", decMt)
-		bs, _ := utils.Utf8ToUcs2(decMt.MsgContent())
-		assert.Equal(t, mt.MsgBytes()[6:], bs)
+		bs := decMt.MsgContent()
+		content := mt.MsgContent()
+		if content[0] == 0x05 && content[1] == 0x00 && content[2] == 0x03 {
+			content = content[6:]
+		}
+		content, _ = utils.Ucs2ToUtf8(content)
+		assert.Equal(t, content, bs)
 	}
 }
 
