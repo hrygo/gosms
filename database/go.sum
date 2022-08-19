@@ -125,8 +125,7 @@ github.com/hashicorp/golang-lru v0.5.0/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ
 github.com/hashicorp/golang-lru v0.5.1/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ4Ao+sR/qLZy8=
 github.com/hashicorp/hcl v1.0.0 h1:0Anlzjpi4vEasTeNFn2mLJgTSwt0+6sfsiTG8qcWGx4=
 github.com/hashicorp/hcl v1.0.0/go.mod h1:E5yfLk+7swimpb2L/Alb/PJmXilQ/rhwaUYs4T20WEQ=
-github.com/hrygo/log v1.2.1 h1:ED8+g3IFRTCxJO1EFwiRPaCv59mt6dbDL7617AVVsek=
-github.com/hrygo/log v1.2.1/go.mod h1:Zrtd002gteJ1m6/SQ+rMKyAHOGDKL3VPB0k/BGjfy18=
+github.com/hrygo/log v1.2.4 h1:UT5mSpObhvi+I3j8jRAy01903gMqBO6myMlEIgGe+CM=
 github.com/hrygo/yaml_config v1.2.5 h1:WLUNAgROpWmOPl70Gb+2le56IA0GkSu8z0+ZSTuw2Dk=
 github.com/hrygo/yaml_config v1.2.5/go.mod h1:ET42uDbUWFfA/XmjNl57Jy3hxzTDWdby0jnHdMRsVRc=
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=

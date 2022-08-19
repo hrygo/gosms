@@ -135,8 +135,7 @@ github.com/hrygo/gosms/event_manager v0.0.0-20220812125744-31ced876c3a3 h1:UXDZj
 github.com/hrygo/gosms/event_manager v0.0.0-20220812125744-31ced876c3a3/go.mod h1:iXNWDq3ep7UHVV0Ibm5AJWz91fEZFFGXR6e7NMbyCeY=
 github.com/hrygo/gosms/utils v0.0.0-20220812125744-31ced876c3a3 h1:1edPLehlQSnMwQHXOLrgZie6ul7k3mpehAOSJevaYA4=
 github.com/hrygo/gosms/utils v0.0.0-20220812125744-31ced876c3a3/go.mod h1:LLvlP0vmuuIbUfBQ4mZCqlm40O/FEBhtdxisIJGUsc4=
-github.com/hrygo/log v1.2.1 h1:ED8+g3IFRTCxJO1EFwiRPaCv59mt6dbDL7617AVVsek=
-github.com/hrygo/log v1.2.1/go.mod h1:Zrtd002gteJ1m6/SQ+rMKyAHOGDKL3VPB0k/BGjfy18=
+github.com/hrygo/log v1.2.4 h1:UT5mSpObhvi+I3j8jRAy01903gMqBO6myMlEIgGe+CM=
 github.com/hrygo/yaml_config v1.2.5 h1:WLUNAgROpWmOPl70Gb+2le56IA0GkSu8z0+ZSTuw2Dk=
 github.com/hrygo/yaml_config v1.2.5/go.mod h1:ET42uDbUWFfA/XmjNl57Jy3hxzTDWdby0jnHdMRsVRc=
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=

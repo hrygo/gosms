@@ -2,7 +2,7 @@ module github.com/hrygo/gosms/event_manager
 
 go 1.18
 
-require github.com/hrygo/log v1.2.1
+require github.com/hrygo/log v1.2.4
 
 require (
 	github.com/pkg/errors v0.9.1 // indirect

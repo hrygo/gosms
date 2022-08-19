@@ -9,8 +9,7 @@ github.com/hrygo/gosms/codec v0.0.0-20220812101323-94db102fa165 h1:xo8XdU2ewN6LE
 github.com/hrygo/gosms/codec v0.0.0-20220812101323-94db102fa165/go.mod h1:jBpwtjQe895mp3Qr1tQlW5YiM1JNRqMiXFn09g2dY0U=
 github.com/hrygo/gosms/utils v0.0.0-20220812101323-94db102fa165 h1:J/j1QoAD37hcSXtjKEAom+uAh/09GpeLPL9fMYQ96bA=
 github.com/hrygo/gosms/utils v0.0.0-20220812101323-94db102fa165/go.mod h1:LLvlP0vmuuIbUfBQ4mZCqlm40O/FEBhtdxisIJGUsc4=
-github.com/hrygo/log v1.2.1 h1:ED8+g3IFRTCxJO1EFwiRPaCv59mt6dbDL7617AVVsek=
-github.com/hrygo/log v1.2.1/go.mod h1:Zrtd002gteJ1m6/SQ+rMKyAHOGDKL3VPB0k/BGjfy18=
+github.com/hrygo/log v1.2.4 h1:UT5mSpObhvi+I3j8jRAy01903gMqBO6myMlEIgGe+CM=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=
 github.com/kr/pretty v0.3.0 h1:WgNl7dwNpEZ6jJ9k1snq4pZsg7DOEN8hP9Xw0Tsjwk0=
 github.com/kr/pretty v0.3.0/go.mod h1:640gp4NfQd8pI5XOwp5fnNeVWj67G7CFk/SaSQn7NBk=

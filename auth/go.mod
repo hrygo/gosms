@@ -3,7 +3,7 @@ module github.com/hrygo/gosms/auth
 go 1.18
 
 require (
-	github.com/hrygo/log v1.2.1
+	github.com/hrygo/log v1.2.4
 	github.com/hrygo/yaml_config v1.2.5
 	go.mongodb.org/mongo-driver v1.10.1
 	gopkg.in/yaml.v3 v3.0.1

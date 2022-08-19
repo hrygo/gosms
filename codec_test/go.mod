@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/hrygo/gosms/codec v0.0.0-20220812101323-94db102fa165
 	github.com/hrygo/gosms/utils v0.0.0-20220812101323-94db102fa165
-	github.com/hrygo/log v1.2.1
+	github.com/hrygo/log v1.2.4
 	github.com/stretchr/testify v1.7.2
 )
 

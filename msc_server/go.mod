@@ -7,7 +7,7 @@ require (
 	github.com/hrygo/gosms/codec v0.0.0-20220812125744-31ced876c3a3
 	github.com/hrygo/gosms/event_manager v0.0.0-20220812125744-31ced876c3a3
 	github.com/hrygo/gosms/utils v0.0.0-20220812125744-31ced876c3a3
-	github.com/hrygo/log v1.2.1
+	github.com/hrygo/log v1.2.4
 	github.com/hrygo/yaml_config v1.2.5
 	github.com/panjf2000/ants/v2 v2.4.8
 	github.com/panjf2000/gnet/v2 v2.1.0

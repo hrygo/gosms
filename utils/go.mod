@@ -3,7 +3,7 @@ module github.com/hrygo/gosms/utils
 go 1.18
 
 require (
-	github.com/hrygo/log v1.2.1
+	github.com/hrygo/log v1.2.4
 	golang.org/x/text v0.3.7
 )
 

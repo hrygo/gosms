@@ -5,7 +5,7 @@ github.com/frankban/quicktest v1.14.3 h1:FJKSZTDHjyhriyC81FLQ0LY93eSai0ZyR/ZIkd3
 github.com/fsnotify/fsnotify v1.5.4 h1:jRbGcIw6P2Meqdwuo0H1p6JVLbL5DHKAKlYndzMwVZI=
 github.com/google/go-cmp v0.5.8 h1:e6P7q2lk1O+qJJb4BtCQXlK8vWEO8V1ZeuEdJNOqZyg=
 github.com/hashicorp/hcl v1.0.0 h1:0Anlzjpi4vEasTeNFn2mLJgTSwt0+6sfsiTG8qcWGx4=
-github.com/hrygo/log v1.2.1 h1:ED8+g3IFRTCxJO1EFwiRPaCv59mt6dbDL7617AVVsek=
+github.com/hrygo/log v1.2.4 h1:UT5mSpObhvi+I3j8jRAy01903gMqBO6myMlEIgGe+CM=
 github.com/hrygo/yaml_config v1.2.5 h1:WLUNAgROpWmOPl70Gb+2le56IA0GkSu8z0+ZSTuw2Dk=
 github.com/kr/pretty v0.3.0 h1:WgNl7dwNpEZ6jJ9k1snq4pZsg7DOEN8hP9Xw0Tsjwk0=
 github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
