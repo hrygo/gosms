@@ -6,23 +6,32 @@ import (
 	"time"
 )
 
-var Sequencer *SequenceNumber
+var Sequencer *sequence
 
-type SequenceNumber struct {
+type sequence struct {
 	sync.Mutex
-	Node      uint32 // 节点编号
+	node      uint32 // SP编号
 	timestamp uint32 // 时间戳 mmddhhmmss 十进制数
 	sequence  uint32 // 循序号
 }
 
-func (s *SequenceNumber) NextVal() (rs []uint32) {
+var seqInit sync.Once
+
+func NewSequencer(node, worker uint32) *sequence {
+	seqInit.Do(func() {
+		Sequencer = &sequence{node: node, sequence: worker}
+	})
+	return Sequencer
+}
+
+func (s *sequence) NextVal() (rs []uint32) {
 	s.Lock()
 	defer s.Unlock()
-	s.sequence = (s.sequence + 1) & 0xffffffff
+	s.sequence = (s.sequence + 0x1f) & 0xffffffff
 	now := time.Now()
 
 	rs = make([]uint32, 3)
-	rs[0] = s.Node
+	rs[0] = s.node
 	s.timestamp = uint32(now.Month() * 100000000)
 	s.timestamp += uint32(now.Day() * 1000000)
 	s.timestamp += uint32(now.Hour() * 10000)
@@ -33,14 +42,14 @@ func (s *SequenceNumber) NextVal() (rs []uint32) {
 	return
 }
 
-func (s *SequenceNumber) CurVal() (rs []uint32) {
+func (s *sequence) CurVal() (rs []uint32) {
 	rs = make([]uint32, 3)
-	rs[0] = s.Node
+	rs[0] = s.node
 	rs[1] = s.timestamp
 	rs[2] = s.sequence
 	return rs
 }
 
-func (s *SequenceNumber) String() string {
-	return fmt.Sprintf("%010d%010d%08x", s.Node, s.timestamp, s.sequence)
+func (s *sequence) String() string {
+	return fmt.Sprintf("%010d%010d%08x", s.node, s.timestamp, s.sequence)
 }

@@ -10,8 +10,8 @@ import (
 // 最大支持32个节点，单节点2^26以内不会重复（67,108,864）
 type CycleSequence struct {
 	sync.Mutex       // 锁
-	datacenter int32 // 数据中心机房id, 取值范围范围：0-4
-	worker     int32 // 工作节点, 取值范围范围：0-8
+	datacenter int32 // 数据中心机房id, 取值范围范围：0-3
+	worker     int32 // 工作节点, 取值范围范围：0-7
 	sequence   int32 // 序列号 26bit
 }
 

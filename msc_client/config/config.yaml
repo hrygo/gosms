@@ -58,7 +58,7 @@ Snowflake: # 类雪花算法序号生成器配置
     DC: 0         # 2bits 0-3
     Worker: 7     # 3bits 0-7
   BCD: 010203     # 3字节（BCD 码，取值 6位十进制数）
-  SGIP: 3037196688
+  SGIP: 3037196688 # SP的编号规则:3AAAAQQQQQ，其中, AAAA表示四位长途区号(不足四位的长途区号，左对齐，右补零),QQQQQ表示5位企业代码。
 
 Logs:
   Default: # 默认的全部日志

@@ -39,7 +39,7 @@ func init() {
 	codec.B32Seq = utils.NewCycleSequence(1, 7)
 	codec.B64Seq = snowflake.NewSnowflake(7, 110)
 	codec.BcdSeq = utils.NewBcdSequence("010101")
-	sgip.Sequencer = &sgip.SequenceNumber{Node: 3037196688}
+	sgip.NewSequencer(3037196688, 0)
 }
 
 const Poem = "将进酒\n" +
